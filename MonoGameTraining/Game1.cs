@@ -10,7 +10,7 @@ namespace MonoGameTraining
     public class Game1 : Game
     {
         private GraphicsDeviceManager graphics;
-        private SpriteBatch spriteBatch;
+        //private SpriteBatch spriteBatch;
 
         //Camera
         Vector3 camTarget;
@@ -20,7 +20,7 @@ namespace MonoGameTraining
         Matrix worldMatrix;
 
         Model model;
-
+        VertexPositionColor
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -120,9 +120,8 @@ namespace MonoGameTraining
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            Matrix[] transforms = new Matrix[model.Bones.Count];
-            model.CopyAbsoluteBoneTransformsTo(transforms);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             foreach (ModelMesh mesh in model.Meshes)
             {
