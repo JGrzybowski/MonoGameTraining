@@ -13,8 +13,8 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Lantern.dae
-/importer:OpenAssetImporter
+#begin ../Assets/Models/Lantern.fbx
+/importer:FbxImporter
 /processor:ModelProcessor
 /processorParam:ColorKeyColor=0,0,0,0
 /processorParam:ColorKeyEnabled=True
@@ -24,11 +24,11 @@
 /processorParam:PremultiplyTextureAlpha=True
 /processorParam:PremultiplyVertexColors=True
 /processorParam:ResizeTexturesToPowerOfTwo=False
-/processorParam:RotationX=-90
+/processorParam:RotationX=0
 /processorParam:RotationY=0
 /processorParam:RotationZ=0
 /processorParam:Scale=1
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=DxtCompressed
-/build:Lantern.dae
+/build:../Assets/Models/Lantern.fbx
 

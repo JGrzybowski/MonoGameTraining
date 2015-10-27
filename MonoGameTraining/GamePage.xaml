@@ -7,6 +7,18 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-  <SwapChainPanel x:Name="swapChainPanel" />
+    <SwapChainPanel x:Name="swapChainPanel">
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition />
+            <ColumnDefinition />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="Hi there! ^^" Grid.Column="2" Foreground="Black" />
+    </SwapChainPanel>
 
 </Page>

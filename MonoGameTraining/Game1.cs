@@ -43,7 +43,7 @@ namespace MonoGameTraining
             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
                                MathHelper.ToRadians(45f), 
                                graphics.GraphicsDevice.Viewport.AspectRatio,
-                               1f, 1000f);
+                               0.1f, 1000f);
             viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));
             worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
         }
@@ -55,6 +55,7 @@ namespace MonoGameTraining
         protected override void LoadContent()
         {
             model = Content.Load<Model>("Lantern");
+
         }
 
         /// <summary>
@@ -120,6 +121,9 @@ namespace MonoGameTraining
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+            Matrix[] transforms = new Matrix[model.Bones.Count];
+            model.CopyAbsoluteBoneTransformsTo(transforms);
+
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (BasicEffect effect in mesh.Effects)
@@ -133,6 +137,21 @@ namespace MonoGameTraining
                 }
                 mesh.Draw();
             }
+
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.EnableDefaultLighting();
+                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
+                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+                    effect.View = viewMatrix;
+                    effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
+                    effect.Projection = projectionMatrix;
+                }
+                mesh.Draw();
+            }
+
             base.Draw(gameTime);
         }
     }
