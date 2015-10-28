@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Linq;
 
 namespace MonoGameTraining
 {
@@ -19,11 +20,20 @@ namespace MonoGameTraining
         Matrix viewMatrix;
         Matrix worldMatrix;
 
+        //Lantern model
         Model model;
-        VertexPositionColor
+
+        //Terrain
+        BasicEffect basicEffect;
+        MeshGrid terrain;
+        VertexBuffer vertexBuffer;
+        VertexPositionColor[] vertexArray;
+        
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
+            terrain = new MeshGrid(4, 4, 15);
             Content.RootDirectory = "Content";
         }
 
@@ -40,12 +50,31 @@ namespace MonoGameTraining
             //Setup Camera
             camTarget = new Vector3(0f, 0f, 0f);
             camPosition = new Vector3(0f, 0f, -15f);
-            projectionMatrix = Matrix.CreatePerspectiveFieldOfView(
-                               MathHelper.ToRadians(45f), 
-                               graphics.GraphicsDevice.Viewport.AspectRatio,
-                               0.1f, 1000f);
+            projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphics.GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
             viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));
             worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
+
+            //Terrain setup
+            vertexArray = terrain.triangleVerticesList().Select(v => new VertexPositionColor(v.Position,v.Color)).ToArray();
+            vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColor), vertexArray.Length, BufferUsage.WriteOnly);
+            vertexBuffer.SetData(vertexArray);
+
+            //BasicEffect
+            basicEffect = new BasicEffect(graphics.GraphicsDevice);
+            basicEffect.Alpha = 1f;
+            basicEffect.VertexColorEnabled = true;
+            basicEffect.LightingEnabled = true;
+            basicEffect.EnableDefaultLighting();
+
+            basicEffect.AmbientLightColor = new Vector3(0.1f, 0.1f, 0f);
+            basicEffect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+
+            basicEffect.DirectionalLight0.Enabled = true;
+            basicEffect.DirectionalLight0.DiffuseColor = new Vector3(0.5f, 1f, 0.5f); // a red light
+            basicEffect.DirectionalLight0.Direction = new Vector3(0, -1, 0);  // coming along the _axis
+            basicEffect.DirectionalLight0.SpecularColor = new Vector3(1, 0, 0); // with green highlights
+
+
         }
 
         /// <summary>
@@ -120,36 +149,52 @@ namespace MonoGameTraining
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
+
+            //Terrain
+            graphics.GraphicsDevice.SetVertexBuffer(vertexBuffer);
+            RasterizerState rasterizerState = new RasterizerState();
+            rasterizerState.CullMode = CullMode.None;
+            GraphicsDevice.RasterizerState = rasterizerState;
+
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            foreach (ModelMesh mesh in model.Meshes)
+            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
             {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.EnableDefaultLighting();
-                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
-                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-                    effect.View = viewMatrix;
-                    effect.World = worldMatrix;
-                    effect.Projection = projectionMatrix;
-                }
-                mesh.Draw();
+                pass.Apply();
+                //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
+                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.triangleVerticesList(), 0, terrain.SizeX * terrain.SizeZ * 2);
             }
 
-            foreach (ModelMesh mesh in model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.EnableDefaultLighting();
-                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
-                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-                    effect.View = viewMatrix;
-                    effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
-                    effect.Projection = projectionMatrix;
-                }
-                mesh.Draw();
-            }
+            ////Lantern1
+            //foreach (ModelMesh mesh in model.Meshes)
+            //{
+            //    foreach (BasicEffect effect in mesh.Effects)
+            //    {
+            //        effect.EnableDefaultLighting();
+            //        effect.AmbientLightColor = new Vector3(1f, 0, 0);
+            //        effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+            //        effect.View = viewMatrix;
+            //        effect.World = worldMatrix;
+            //        effect.Projection = projectionMatrix;
+            //    }
+            //    mesh.Draw();
+            //}
+
+            ////Lantern2
+            //foreach (ModelMesh mesh in model.Meshes)
+            //{
+            //    foreach (BasicEffect effect in mesh.Effects)
+            //    {
+            //        effect.EnableDefaultLighting();
+            //        effect.AmbientLightColor = new Vector3(1f, 0, 0);
+            //        effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+            //        effect.View = viewMatrix;
+            //        effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
+            //        effect.Projection = projectionMatrix;
+            //    }
+            //    mesh.Draw();
+            //}
 
             base.Draw(gameTime);
         }

@@ -14,20 +14,20 @@ namespace MonoGameTraining
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     public struct VertexPositionColorNormal : IVertexType
     {
-
-        private static VertexElement[] elements = new VertexElement[] {
-                new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
-                new VertexElement(12, VertexElementFormat.Color, VertexElementUsage.Color, 0),
-                new VertexElement(16, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0)
-        };
-        private static VertexDeclaration vertexDeclaration = new VertexDeclaration(elements);
-        VertexDeclaration IVertexType.VertexDeclaration { get { return vertexDeclaration; } }
-        [DataMember]
-        public Color Color;
         [DataMember]
         public Vector3 Position;
         [DataMember]
+        public Color Color;
+        [DataMember]
         public Vector3 Normal;
+
+        private static readonly VertexElement[] elements = new VertexElement[] {
+                new VertexElement(0, VertexElementFormat.Vector3, VertexElementUsage.Position, 0),
+                new VertexElement(sizeof(float) * 3, VertexElementFormat.Color, VertexElementUsage.Color, 0),
+                new VertexElement(sizeof(float)*3 + 4, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0)
+        };
+        private static VertexDeclaration vertexDeclaration = new VertexDeclaration(elements);
+        VertexDeclaration IVertexType.VertexDeclaration { get { return vertexDeclaration; } }
 
         public VertexPositionColorNormal(Vector3 position, Color color, Vector3 normal)
         {
@@ -44,12 +44,7 @@ namespace MonoGameTraining
                 return false;
             return this == (VertexPositionColorNormal)obj;
         }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
+        public override int GetHashCode() { return base.GetHashCode(); }
         public override string ToString() { return string.Format("[{0}] [{1}] [{2}]", Position.ToString(), Color.ToString(), Normal.ToString()); }
 
         public static bool operator ==(VertexPositionColorNormal left, VertexPositionColorNormal right) {
