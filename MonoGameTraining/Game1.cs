@@ -15,19 +15,20 @@ namespace MonoGameTraining
 
         //Camera
         Vector3 camTarget;
-        Vector3 camPosition;
+        public CameraController Camera;
+
         Matrix projectionMatrix;
-        Matrix viewMatrix;
         Matrix worldMatrix;
 
         //Lantern model
         Model model;
+        BasicEffect basicEffect;
 
         //Terrain
-        BasicEffect basicEffect;
+        Effect effect;
         MeshGrid terrain;
         VertexBuffer vertexBuffer;
-        VertexPositionColor[] vertexArray;
+        VertexPositionColorNormal[] vertexArray;
         
 
         public Game1()
@@ -48,17 +49,16 @@ namespace MonoGameTraining
             base.Initialize();
 
             //Setup Camera
-            camTarget = new Vector3(0f, 0f, 0f);
-            camPosition = new Vector3(0f, 0f, -15f);
+            Camera = new CameraController(new Vector3(0f, 0f, -15f));
+            Camera.ProcessInput(0f);
+
             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphics.GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
-            viewMatrix = Matrix.CreateLookAt(camPosition, camTarget, new Vector3(0f, 1f, 0f));
             worldMatrix = Matrix.CreateWorld(camTarget, Vector3.Forward, Vector3.Up);
 
             //Terrain setup
-            vertexArray = terrain.triangleVerticesList().Select(v => new VertexPositionColor(v.Position,v.Color)).ToArray();
-            vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColor), vertexArray.Length, BufferUsage.WriteOnly);
+            vertexArray = terrain.triangleVerticesList();
+            vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColorNormal), vertexArray.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexArray);
-
             //BasicEffect
             basicEffect = new BasicEffect(graphics.GraphicsDevice);
             basicEffect.Alpha = 1f;
@@ -74,7 +74,6 @@ namespace MonoGameTraining
             basicEffect.DirectionalLight0.Direction = new Vector3(0, -1, 0);  // coming along the _axis
             basicEffect.DirectionalLight0.SpecularColor = new Vector3(1, 0, 0); // with green highlights
 
-
         }
 
         /// <summary>
@@ -83,8 +82,8 @@ namespace MonoGameTraining
         /// </summary>
         protected override void LoadContent()
         {
+            effect = Content.Load<Effect>("effects");
             model = Content.Load<Model>("Lantern");
-
         }
 
         /// <summary>
@@ -103,42 +102,8 @@ namespace MonoGameTraining
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back ==
-               ButtonState.Pressed || Keyboard.GetState().IsKeyDown(
-               Keys.Escape))
-                Exit();
-
-            if (Keyboard.GetState().IsKeyDown(Keys.D))
-            {
-                camPosition.X -= 0.1f;
-                camTarget.X -= 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.A))
-            {
-                camPosition.X += 0.1f;
-                camTarget.X += 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.S))
-            {
-                camPosition.Y -= 0.1f;
-                camTarget.Y -= 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.W))
-            {
-                camPosition.Y += 0.1f;
-                camTarget.Y += 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.OemPlus))
-            {
-                camPosition.Z += 0.1f;
-            }
-            if (Keyboard.GetState().IsKeyDown(Keys.OemMinus))
-            {
-                camPosition.Z -= 0.1f;
-            }
-            
-            viewMatrix = Matrix.CreateLookAt(camPosition, camTarget,
-                         Vector3.Up);
+            float timeDifference = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
+            Camera.ProcessInput(timeDifference);
             base.Update(gameTime);
         }
 
@@ -159,42 +124,47 @@ namespace MonoGameTraining
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            foreach (EffectPass pass in basicEffect.CurrentTechnique.Passes)
+
+            effect.CurrentTechnique = effect.Techniques["ColoredNoShading"];
+            effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
+            effect.Parameters["xProjection"].SetValue(projectionMatrix);
+            effect.Parameters["xWorld"].SetValue(Matrix.Identity);
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
                 //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.triangleVerticesList(), 0, terrain.SizeX * terrain.SizeZ * 2);
+                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.triangleVerticesList(), 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
             }
 
-            ////Lantern1
-            //foreach (ModelMesh mesh in model.Meshes)
-            //{
-            //    foreach (BasicEffect effect in mesh.Effects)
-            //    {
-            //        effect.EnableDefaultLighting();
-            //        effect.AmbientLightColor = new Vector3(1f, 0, 0);
-            //        effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-            //        effect.View = viewMatrix;
-            //        effect.World = worldMatrix;
-            //        effect.Projection = projectionMatrix;
-            //    }
-            //    mesh.Draw();
-            //}
+            //Lantern1
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.EnableDefaultLighting();
+                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
+                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+                    effect.View = Camera.ViewMatrix;
+                    effect.World = worldMatrix;
+                    effect.Projection = projectionMatrix;
+                }
+                mesh.Draw();
+            }
 
-            ////Lantern2
-            //foreach (ModelMesh mesh in model.Meshes)
-            //{
-            //    foreach (BasicEffect effect in mesh.Effects)
-            //    {
-            //        effect.EnableDefaultLighting();
-            //        effect.AmbientLightColor = new Vector3(1f, 0, 0);
-            //        effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-            //        effect.View = viewMatrix;
-            //        effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
-            //        effect.Projection = projectionMatrix;
-            //    }
-            //    mesh.Draw();
-            //}
+            //Lantern2
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.EnableDefaultLighting();
+                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
+                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+                    effect.View = Camera.ViewMatrix;
+                    effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
+                    effect.Projection = projectionMatrix;
+                }
+                mesh.Draw();
+            }
 
             base.Draw(gameTime);
         }

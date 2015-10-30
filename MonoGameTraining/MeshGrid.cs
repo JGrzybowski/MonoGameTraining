@@ -28,9 +28,14 @@ namespace MonoGameTraining
             this.sizeZ = sizeZ;
             this.Vertices = new VertexPositionColorNormal[sizeX + 1, sizeZ + 1];
             this.Triangles = new Tuple<VertexPositionColorNormal, VertexPositionColorNormal, VertexPositionColorNormal>[sizeX*sizeZ*2];
+            var rand = new Random();
+
             for (int x = 0; x < sizeX+1; x++)
                 for (int z = 0; z < sizeZ+1; z++)
-                    this.Vertices[x, z] = new VertexPositionColorNormal(new Vector3(squareSideSize*x, 0, squareSideSize*z), Color.Honeydew, Vector3.Up);
+                    this.Vertices[x, z] = new VertexPositionColorNormal(new Vector3(squareSideSize*x, 0, squareSideSize*z), new Color(0, 0.5f, 0.2f), Vector3.Up);
+
+            //for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
+
             for (int x = 0; x < sizeX; x++)
                 for (int z = 0; z < sizeZ; z++)
                 {

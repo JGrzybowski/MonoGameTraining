@@ -18,7 +18,6 @@
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <TextBlock Text="Hi there! ^^" Grid.Column="2" Foreground="Black" />
     </SwapChainPanel>
 
 </Page>

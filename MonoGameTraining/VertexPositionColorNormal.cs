@@ -26,8 +26,8 @@ namespace MonoGameTraining
                 new VertexElement(sizeof(float) * 3, VertexElementFormat.Color, VertexElementUsage.Color, 0),
                 new VertexElement(sizeof(float)*3 + 4, VertexElementFormat.Vector3, VertexElementUsage.Normal, 0)
         };
-        private static VertexDeclaration vertexDeclaration = new VertexDeclaration(elements);
-        VertexDeclaration IVertexType.VertexDeclaration { get { return vertexDeclaration; } }
+        public static VertexDeclaration VertexDeclaration = new VertexDeclaration(elements);
+        VertexDeclaration IVertexType.VertexDeclaration { get { return VertexDeclaration; } }
 
         public VertexPositionColorNormal(Vector3 position, Color color, Vector3 normal)
         {
