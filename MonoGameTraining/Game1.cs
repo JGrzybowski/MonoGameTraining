@@ -10,7 +10,7 @@ namespace MonoGameTraining
     /// </summary>
     public class Game1 : Game
     {
-        private bool useCustomShader = false;
+        private bool useCustomShader = true;
 
         private GraphicsDeviceManager graphics;
 
@@ -39,7 +39,7 @@ namespace MonoGameTraining
             base.Initialize();
 
             //Setup Camera
-            Camera = new CameraController(new Vector3(0f, 0f, -15f));
+            Camera = new CameraController(new Vector3(0f, 7f, -15f));
             Camera.ProcessInput(0f);
 
             //Setup other matrices
@@ -47,7 +47,8 @@ namespace MonoGameTraining
             worldMatrix = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
 
             //Fill buffer with terrain vertices
-            vertexArray = terrain.triangleVerticesList();
+            terrain.RecalculateNormals();
+            vertexArray = terrain.TriangleVerticesList;
             vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColorNormal), vertexArray.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexArray);
             
@@ -92,8 +93,8 @@ namespace MonoGameTraining
             else
             {
                 effect.CurrentTechnique = effect.Techniques["Colored"];
-                //effect.Parameters["xEnableLighting"].SetValue(true);
-                //effect.Parameters["xLightDirection"].SetValue(new Vector3(0,1,0));
+                effect.Parameters["xEnableLighting"].SetValue(true);
+                effect.Parameters["xLightDirection"].SetValue(new Vector3(0,1,0));
             }
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
@@ -105,7 +106,7 @@ namespace MonoGameTraining
             {
                 pass.Apply();
                 //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.triangleVerticesList(), 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
+                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
             }
 
             //  Lantern1
@@ -117,12 +118,14 @@ namespace MonoGameTraining
         }
         private void SetupCustomShader(Effect effect)
         {
-            effect.CurrentTechnique = effect.Techniques["FirstTechnique"];
-            effect.Parameters["Light1Position"].SetValue(new Vector3(5, 5, 5));
-            effect.Parameters["Light1Color"].SetValue(new Color(Color.Beige, 1).ToVector4());
-            effect.Parameters["ambient"].SetValue(new Vector4(0.1f, 0.1f, 0.1f, 1));
-            effect.Parameters["diffuse"].SetValue(new Vector4(0.1f, 0.1f, 0.1f, 1));
-            effect.Parameters["specular"].SetValue(200);
+            effect.CurrentTechnique = effect.Techniques["Point"];
+            effect.Parameters["Light1Position"].SetValue(new Vector3(5, 20, 5));
+            effect.Parameters["Light1Color"].SetValue(new Color(Color.White, 1).ToVector4());
+            effect.Parameters["Light1Range"].SetValue(15.0f);
+            effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["Diffuse1Color"].SetValue(new Vector4(1f));
+            effect.Parameters["Specular1Color"].SetValue(new Vector4(1,1,1,200));
+
         }
         private void DrawModel(Model model, Vector3 modelPosition)
         {

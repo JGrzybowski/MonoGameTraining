@@ -22,6 +22,10 @@ namespace MonoGameTraining
                 Index2 = new Point(x2, y2);
                 Index3 = new Point(x3, y3);
             }
+            public override string ToString()
+            {
+                return string.Format("{0} {1} {2}", Index1, Index2, Index3);
+            }
         }
 
         public VertexPositionColorNormal[,] Vertices;
@@ -48,7 +52,7 @@ namespace MonoGameTraining
                 for (int z = 0; z < sizeZ+1; z++)
                     this.Vertices[x, z] = new VertexPositionColorNormal(new Vector3(squareSideSize*x, 0, squareSideSize*z), new Color(0, 0.5f, 0.2f), Vector3.Up);
 
-            for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
+            //for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
 
             for (int x = 0; x < sizeX; x++)
                 for (int z = 0; z < sizeZ; z++)
@@ -92,16 +96,19 @@ namespace MonoGameTraining
         }
 
 
-        public VertexPositionColorNormal[] triangleVerticesList()
+        public VertexPositionColorNormal[] TriangleVerticesList
         {
-            List<VertexPositionColorNormal> list = new List<VertexPositionColorNormal>();
-            foreach(var triangle in Triangles)
+            get
             {
-                list.Add(Vertices[triangle.Index1.X,triangle.Index1.Y]);
-                list.Add(Vertices[triangle.Index2.X,triangle.Index2.Y]);
-                list.Add(Vertices[triangle.Index3.X,triangle.Index3.Y]);
+                List<VertexPositionColorNormal> list = new List<VertexPositionColorNormal>();
+                foreach (var triangle in Triangles)
+                {
+                    list.Add(Vertices[triangle.Index1.X, triangle.Index1.Y]);
+                    list.Add(Vertices[triangle.Index2.X, triangle.Index2.Y]);
+                    list.Add(Vertices[triangle.Index3.X, triangle.Index3.Y]);
+                }
+                return list.ToArray();
             }
-            return list.ToArray();
         }
 
     }
