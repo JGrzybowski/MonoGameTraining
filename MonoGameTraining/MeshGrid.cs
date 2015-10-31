@@ -10,8 +10,22 @@ namespace MonoGameTraining
 {
     public class MeshGrid
     {
+        public class Triangle
+        {
+            public Point Index1 { get; set; }
+            public Point Index2 { get; set; }
+            public Point Index3 { get; set; }
+
+            public Triangle(int x1, int y1, int x2, int y2, int x3, int y3)
+            {
+                Index1 = new Point(x1, y1);
+                Index2 = new Point(x2, y2);
+                Index3 = new Point(x3, y3);
+            }
+        }
+
         public VertexPositionColorNormal[,] Vertices;
-        public Tuple<VertexPositionColorNormal, VertexPositionColorNormal, VertexPositionColorNormal>[] Triangles;
+        public Triangle[] Triangles;
         public BasicEffect basicEffect;
         //private GraphicsDevice device;
 
@@ -27,7 +41,7 @@ namespace MonoGameTraining
             this.sizeX = sizeX;
             this.sizeZ = sizeZ;
             this.Vertices = new VertexPositionColorNormal[sizeX + 1, sizeZ + 1];
-            this.Triangles = new Tuple<VertexPositionColorNormal, VertexPositionColorNormal, VertexPositionColorNormal>[sizeX*sizeZ*2];
+            this.Triangles = new Triangle[sizeX*sizeZ*2];
             var rand = new Random();
 
             for (int x = 0; x < sizeX+1; x++)
@@ -39,8 +53,8 @@ namespace MonoGameTraining
             for (int x = 0; x < sizeX; x++)
                 for (int z = 0; z < sizeZ; z++)
                 {
-                    Triangles[x*2*sizeZ + z] = new Tuple<VertexPositionColorNormal, VertexPositionColorNormal, VertexPositionColorNormal>(Vertices[x,z], Vertices[x,z+1], Vertices[x+1,z]);
-                    Triangles[x*2*sizeZ + sizeZ + z] = new Tuple<VertexPositionColorNormal, VertexPositionColorNormal, VertexPositionColorNormal>(Vertices[x,z+1], Vertices[x+1,z], Vertices[x+1,z+1]);
+                    Triangles[x * 2 * sizeZ + z] = new Triangle(x, z, x, z + 1, x + 1, z);
+                    Triangles[x * 2 * sizeZ + sizeZ + z] = new Triangle(x, z + 1, x + 1, z, x + 1, z + 1);
                 } 
         }
 
@@ -50,21 +64,56 @@ namespace MonoGameTraining
             set { Vertices[x, z] = value; }
         }
 
+        //private VertexPositionColorNormal[] CalculateNormals(VertexPositionColorNormal[] vertices, int[] indices)
+        //{
+        //    for (int i = 0; i < vertices.Length; i++)
+        //        vertices[i].Normal = Vector3.Zero;
+
+        //    for (int i = 0; i < Triangles.Length; i++)
+        //    {
+        //        var triangle = Triangles[i];
+
+        //        Vector3 side1 = triangle.Vertex1.Position - triangle.Vertex3.Position;
+        //        Vector3 side2 = triangle.Vertex1.Position - triangle.Vertex2.Position;
+        //        Vector3 normal = Vector3.Cross(side1, side2);
+
+        //        triangle.Vertex1.Normal += normal;
+        //        triangle.Vertex2.Normal += normal;
+        //        triangle.Vertex3.Normal += normal;
+        //    }
+
+        //    for (int i = 0; i < indices.Length / 3; i++)
+        //    {
+        //        int index1 = indices[i * 3];
+        //        int index2 = indices[i * 3 + 1];
+        //        int index3 = indices[i * 3 + 2];
+
+        //        Vector3 side1 = vertices[index1].Position - vertices[index3].Position;
+        //        Vector3 side2 = vertices[index1].Position - vertices[index2].Position;
+        //        Vector3 normal = Vector3.Cross(side1, side2);
+
+        //        vertices[index1].Normal += normal;
+        //        vertices[index2].Normal += normal;
+        //        vertices[index3].Normal += normal;
+        //    }
+
+        //    for (int i = 0; i < vertices.Length; i++)
+        //        vertices[i].Normal.Normalize();
+
+        //    return vertices;
+        //}
+
         public VertexPositionColorNormal[] triangleVerticesList()
         {
             List<VertexPositionColorNormal> list = new List<VertexPositionColorNormal>();
             foreach(var triangle in Triangles)
             {
-                list.Add(triangle.Item1);
-                list.Add(triangle.Item2);
-                list.Add(triangle.Item3);
+                list.Add(Vertices[triangle.Index1.X,triangle.Index1.Y]);
+                list.Add(Vertices[triangle.Index2.X,triangle.Index2.Y]);
+                list.Add(Vertices[triangle.Index3.X,triangle.Index3.Y]);
             }
             return list.ToArray();
         }
 
-        public void Draw(VertexBuffer buffer)
-        {
-            
-        }
     }
 }
