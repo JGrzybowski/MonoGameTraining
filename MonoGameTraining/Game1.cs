@@ -10,25 +10,23 @@ namespace MonoGameTraining
     /// </summary>
     public class Game1 : Game
     {
-        private GraphicsDeviceManager graphics;
-        //private SpriteBatch spriteBatch;
+        private bool useCustomShader = false;
 
-        //Camera
-        public CameraController Camera;
+        private GraphicsDeviceManager graphics;
 
         Matrix projectionMatrix;
         Matrix worldMatrix;
 
+        //Camera
+        public CameraController Camera;
         //Lantern model
         Model model;
-
         //Terrain
         Effect effect;
         MeshGrid terrain;
         VertexBuffer vertexBuffer;
         VertexPositionColorNormal[] vertexArray;
         
-
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -36,12 +34,6 @@ namespace MonoGameTraining
             Content.RootDirectory = "Content";
         }
 
-        /// <summary>
-        /// Allows the game to perform any initialization it needs to before starting to run.
-        /// This is where it can query for any required services and load any non-graphic
-        /// related content.  Calling base.Initialize will enumerate through any components
-        /// and initialize them as well.
-        /// </summary>
         protected override void Initialize()
         {
             base.Initialize();
@@ -60,44 +52,27 @@ namespace MonoGameTraining
             vertexBuffer.SetData(vertexArray);
             
         }
-
-        /// <summary>
-        /// LoadContent will be called once per game and is the place to load
-        /// all of your content.
-        /// </summary>
+        
         protected override void LoadContent()
         {
-            effect = Content.Load<Effect>("effects");
+            if (useCustomShader)
+                effect = Content.Load<Effect>("fxs");
+            else
+                effect = Content.Load<Effect>("effects");
             model = Content.Load<Model>("Lantern");
         }
 
-        /// <summary>
-        /// UnloadContent will be called once per game and is the place to unload
-        /// game-specific content.
-        /// </summary>
-        protected override void UnloadContent()
-        {
+        protected override void UnloadContent() { }
 
-        }
-
-        /// <summary>
-        /// Allows the game to run logic such as updating the world,
-        /// checking for collisions, gathering input, and playing audio.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
             //Update Camera position and angle
             float timeDifference = (float)gameTime.ElapsedGameTime.TotalMilliseconds / 1000.0f;
             Camera.ProcessInput(timeDifference);
-
+            terrain.RecalculateNormals();
             base.Update(gameTime);
         }
 
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
-        /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -112,7 +87,14 @@ namespace MonoGameTraining
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
             //Shader settings
-            effect.CurrentTechnique = effect.Techniques["ColoredNoShading"];
+            if (useCustomShader)
+                SetupCustomShader(effect);
+            else
+            {
+                effect.CurrentTechnique = effect.Techniques["Colored"];
+                //effect.Parameters["xEnableLighting"].SetValue(true);
+                //effect.Parameters["xLightDirection"].SetValue(new Vector3(0,1,0));
+            }
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xWorld"].SetValue(Matrix.Identity);
@@ -127,37 +109,36 @@ namespace MonoGameTraining
             }
 
             //  Lantern1
-            foreach (ModelMesh mesh in model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.EnableDefaultLighting();
-
-                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
-                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-                    effect.View = Camera.ViewMatrix;
-                    effect.World = worldMatrix;
-                    effect.Projection = projectionMatrix;
-                }
-                mesh.Draw();
-            }
-
+            DrawModel(model, new Vector3(0, 0, 0));
             //  Lantern2
-            foreach (ModelMesh mesh in model.Meshes)
-            {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    effect.EnableDefaultLighting();
-                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
-                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-                    effect.View = Camera.ViewMatrix;
-                    effect.World = worldMatrix * Matrix.CreateTranslation(9, 0, 5);
-                    effect.Projection = projectionMatrix;
-                }
-                mesh.Draw();
-            }
+            DrawModel(model, new Vector3(9, 0, 5));
 
             base.Draw(gameTime);
+        }
+        private void SetupCustomShader(Effect effect)
+        {
+            effect.CurrentTechnique = effect.Techniques["FirstTechnique"];
+            effect.Parameters["Light1Position"].SetValue(new Vector3(5, 5, 5));
+            effect.Parameters["Light1Color"].SetValue(new Color(Color.Beige, 1).ToVector4());
+            effect.Parameters["ambient"].SetValue(new Vector4(0.1f, 0.1f, 0.1f, 1));
+            effect.Parameters["diffuse"].SetValue(new Vector4(0.1f, 0.1f, 0.1f, 1));
+            effect.Parameters["specular"].SetValue(200);
+        }
+        private void DrawModel(Model model, Vector3 modelPosition)
+        {
+            foreach (ModelMesh mesh in model.Meshes)
+            {
+                foreach (BasicEffect effect in mesh.Effects)
+                {
+                    effect.EnableDefaultLighting();
+                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
+                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
+                    effect.View = Camera.ViewMatrix;
+                    effect.World = worldMatrix * Matrix.CreateTranslation(modelPosition);
+                    effect.Projection = projectionMatrix;
+                }
+                mesh.Draw();
+            }
         }
     }
 }

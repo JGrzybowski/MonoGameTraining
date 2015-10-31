@@ -48,7 +48,7 @@ namespace MonoGameTraining
                 for (int z = 0; z < sizeZ+1; z++)
                     this.Vertices[x, z] = new VertexPositionColorNormal(new Vector3(squareSideSize*x, 0, squareSideSize*z), new Color(0, 0.5f, 0.2f), Vector3.Up);
 
-            //for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
+            for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
 
             for (int x = 0; x < sizeX; x++)
                 for (int z = 0; z < sizeZ; z++)
@@ -64,44 +64,33 @@ namespace MonoGameTraining
             set { Vertices[x, z] = value; }
         }
 
-        //private VertexPositionColorNormal[] CalculateNormals(VertexPositionColorNormal[] vertices, int[] indices)
-        //{
-        //    for (int i = 0; i < vertices.Length; i++)
-        //        vertices[i].Normal = Vector3.Zero;
+        public void RecalculateNormals()
+        {
+            for (int i = 0; i < SizeX; i++)
+                for (int j = 0; j < SizeZ; j++)
+                    Vertices[i,j].Normal = Vector3.Zero;
 
-        //    for (int i = 0; i < Triangles.Length; i++)
-        //    {
-        //        var triangle = Triangles[i];
+            foreach (var triangle in Triangles)
+            {
+                RecalculateTriangleNormals(triangle);
+            }
 
-        //        Vector3 side1 = triangle.Vertex1.Position - triangle.Vertex3.Position;
-        //        Vector3 side2 = triangle.Vertex1.Position - triangle.Vertex2.Position;
-        //        Vector3 normal = Vector3.Cross(side1, side2);
+           for (int i = 0; i < SizeX; i++)
+                for (int j = 0; j < SizeZ; j++)
+                    Vertices[i,j].Normal.Normalize();
+        }
 
-        //        triangle.Vertex1.Normal += normal;
-        //        triangle.Vertex2.Normal += normal;
-        //        triangle.Vertex3.Normal += normal;
-        //    }
+        private void RecalculateTriangleNormals(Triangle triangle)
+        {
+            Vector3 side1 = Vertices[triangle.Index1.X, triangle.Index1.Y].Position - Vertices[triangle.Index3.X, triangle.Index3.Y].Position;
+            Vector3 side2 = Vertices[triangle.Index1.X, triangle.Index1.Y].Position - Vertices[triangle.Index2.X, triangle.Index2.Y].Position;
+            Vector3 normal = Vector3.Cross(side1, side2);
 
-        //    for (int i = 0; i < indices.Length / 3; i++)
-        //    {
-        //        int index1 = indices[i * 3];
-        //        int index2 = indices[i * 3 + 1];
-        //        int index3 = indices[i * 3 + 2];
+            Vertices[triangle.Index1.X, triangle.Index1.Y].Normal += normal;
+            Vertices[triangle.Index2.X, triangle.Index2.Y].Normal += normal;
+            Vertices[triangle.Index3.X, triangle.Index3.Y].Normal += normal;
+        }
 
-        //        Vector3 side1 = vertices[index1].Position - vertices[index3].Position;
-        //        Vector3 side2 = vertices[index1].Position - vertices[index2].Position;
-        //        Vector3 normal = Vector3.Cross(side1, side2);
-
-        //        vertices[index1].Normal += normal;
-        //        vertices[index2].Normal += normal;
-        //        vertices[index3].Normal += normal;
-        //    }
-
-        //    for (int i = 0; i < vertices.Length; i++)
-        //        vertices[i].Normal.Normalize();
-
-        //    return vertices;
-        //}
 
         public VertexPositionColorNormal[] triangleVerticesList()
         {
