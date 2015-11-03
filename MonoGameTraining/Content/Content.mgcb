@@ -38,9 +38,9 @@
 /processorParam:DebugMode=Auto
 /build:effects.fx
 
-#begin fxs.fx
+#begin NewPointLight.fx
 /importer:EffectImporter
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
-/build:fxs.fx
+/build:NewPointLight.fx
 

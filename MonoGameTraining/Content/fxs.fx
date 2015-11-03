@@ -10,16 +10,21 @@ float4 Specular1Color;
 
 
 struct VertexShaderIn {
-	float4 Position : SV_Position0;
+	float4 Position : SV_POSITION0;
 	float4 Color : COLOR0;
 	float4 Normal : NORMAL0;
 };
 
 struct VertexShaderOut {
-	float4 Position : SV_Position;
+	float4 Position : SV_POSITION0;
 	float4 WPosition : TEXCOORD0;
 	float4 Color : COLOR0;
 	float4 WNormal : TEXCOORD1;
+};
+
+struct Material
+{
+	float Ka, Kd, Ks, A;
 };
 
 struct PixelShaderOut {
@@ -30,9 +35,10 @@ VertexShaderOut VSmain (VertexShaderIn i) {
 	VertexShaderOut o = (VertexShaderOut)0;
 	
 	o.WPosition = mul(i.Position, xWorld);
-	o.WNormal = normalize(mul(i.Normal, xWorld));
 	o.Position = mul(o.WPosition, xView);
 	o.Position = mul(o.WPosition, xProjection);
+	
+	o.WNormal = normalize(mul(i.Normal, xWorld));
 	o.Color = i.Color; 
 
 	return o;
@@ -61,66 +67,78 @@ technique FirstTechnique
 }
 
 //-------------
+//
+//struct VertexToPixel
+//{
+//	float4 Position     : POSITION;
+//	float4 Color		: COLOR0;
+//	float3 Normal        : TEXCOORD1;
+//	float3 Position3D    : TEXCOORD2;
+//};
+//
+//struct PixelToFrame
+//{
+//	float4 Color        : COLOR0;
+//};
+//
+//
+//VertexToPixel SimplestVertexShader(VertexShaderIn i)
+//{
+//	VertexToPixel Output = (VertexToPixel)0;
+//
+//	Output.Position = mul(i.Position, xWorld);
+//	Output.Position = mul(Output.Position, xView);
+//	Output.Position = mul(Output.Position, xProjection);
+//
+//	Output.Color = i.Color;
+//	Output.Normal = normalize(mul(i.Normal, (float3x3)xWorld));
+//	Output.Position3D = mul(i.Position, xWorld);
+//
+//	return Output;
+//}
+//
+//float DotProduct(float3 lightPos, float3 pos3D, float3 normal)
+//{
+//	float3 lightDir = normalize(pos3D - lightPos);
+//	return dot(-lightDir, normal);
+//}
+//
+//PixelToFrame OurFirstPixelShader(VertexToPixel PSIn)
+//{
+//	PixelToFrame Output = (PixelToFrame)0;
+//
+//	float diffuseLightingFactor = DotProduct(Light1Position, PSIn.Position3D, PSIn.Normal);
+//	diffuseLightingFactor = saturate(diffuseLightingFactor);
+//	diffuseLightingFactor *= Light1Range;
+//
+//	float4 baseColor = PSIn.Color;
+//	Output.Color = baseColor*(diffuseLightingFactor + AmbientColor);
+//
+//	return Output;
+//}
+//
+//technique Simplest
+//{
+//	pass Pass0
+//	{
+//		VertexShader = compile vs_4_0 SimplestVertexShader();
+//		PixelShader = compile ps_4_0 OurFirstPixelShader();
+//	}
+//}
 
-struct VertexToPixel
+
+
+//--------------------------------------------------------------------------------------
+// Phong Lighting Reflection Model
+//--------------------------------------------------------------------------------------
+float4 calcPhongLighting(Material M, float4 LColor, float3 N, float3 L, float3 V, float3 R)
 {
-	float4 Position     : POSITION;
-	float4 Color		: COLOR0;
-	float3 Normal        : TEXCOORD1;
-	float3 Position3D    : TEXCOORD2;
-};
+	float4 Ia = M.Ka * AmbientColor;
+	float4 Id = M.Kd * saturate(dot(N, L));
+	float4 Is = M.Ks * pow(saturate(dot(R, V)), M.A);
 
-struct PixelToFrame
-{
-	float4 Color        : COLOR0;
-};
-
-
-VertexToPixel SimplestVertexShader(VertexShaderIn i)
-{
-	VertexToPixel Output = (VertexToPixel)0;
-
-	Output.Position = mul(i.Position, xWorld);
-	Output.Position = mul(Output.Position, xView);
-	Output.Position = mul(Output.Position, xProjection);
-
-	Output.Color = i.Color;
-	Output.Normal = normalize(mul(i.Normal, (float3x3)xWorld));
-	Output.Position3D = mul(i.Position, xWorld);
-
-	return Output;
+	return Ia + (Id + Is) * LColor;
 }
-
-float DotProduct(float3 lightPos, float3 pos3D, float3 normal)
-{
-	float3 lightDir = normalize(pos3D - lightPos);
-	return dot(-lightDir, normal);
-}
-
-PixelToFrame OurFirstPixelShader(VertexToPixel PSIn)
-{
-	PixelToFrame Output = (PixelToFrame)0;
-
-	float diffuseLightingFactor = DotProduct(Light1Position, PSIn.Position3D, PSIn.Normal);
-	diffuseLightingFactor = saturate(diffuseLightingFactor);
-	diffuseLightingFactor *= Light1Range;
-
-	float4 baseColor = PSIn.Color;
-	Output.Color = baseColor*(diffuseLightingFactor + AmbientColor);
-
-	return Output;
-}
-
-technique Simplest
-{
-	pass Pass0
-	{
-		VertexShader = compile vs_4_0 SimplestVertexShader();
-		PixelShader = compile ps_4_0 OurFirstPixelShader();
-	}
-}
-
-
 //----------
 VertexShaderOut PointVertexShader(VertexShaderIn input)
 {
@@ -140,35 +158,48 @@ VertexShaderOut PointVertexShader(VertexShaderIn input)
 PixelShaderOut PointPixelShader(VertexShaderOut input)
 {
 	PixelShaderOut Output = (PixelShaderOut)0;
+	//Output.Color = input.Color;
+	//Output.Color.w = 1;
+	//return Output;
+	
 	float3 normal = normalize(input.WNormal);
 	float3 toCameraVector = normalize(xCameraPosition - input.WPosition);
-
 	float3 toLightVector = Light1Position - input.WPosition;
 
 	//Tłumienie
 	float attenuation = 1;
-	//float attenuation =saturate(1 - dot(toLightVector/ Light1Range,toLightVector/ Light1Range));
+	//float attenuation = saturate(1 - dot(toLightVector/ Light1Range,toLightVector/ Light1Range));
 
 	toLightVector = normalize(toLightVector);
-	float3 diffuse = AmbientColor;
+	float3 diffuse = float3(0,0,0);
 
-	float NdotL = saturate(dot(normal, toLightVector));
+	float NdotL = saturate(dot(toLightVector, normal));
 	diffuse += NdotL * diffuse * attenuation;
 	
 	float3 binormal = normalize(toCameraVector + toLightVector);
 	float NdotH = saturate(dot(normal, binormal));
 
-	float specular =0;
+	float specular = 0;
 	if(NdotL != 0)
 		specular += pow(NdotH, Specular1Color.w) * Specular1Color * attenuation;
 
-	float3 finalColor = float3(0,0,0);
-	finalColor += diffuse * Diffuse1Color;
-	finalColor += Specular1Color.xyz * specular;
-	
+	float3 r1 = reflect(toLightVector, input.WNormal);
+
+	Material M = (Material)0;
+	M.Ka = 0.2;
+	M.Kd = 0.5;
+	M.Ks = 0.0;
+	M.A = Specular1Color.w;
+
+	float3 finalColor = calcPhongLighting(M, Light1Color, normal, toLightVector, toCameraVector, r1);
+	//finalColor += AmbientColor;
+	//finalColor += diffuse * Diffuse1Color;
+	//finalColor += Specular1Color.xyz * specular;
+	//finalColor = input.Color * finalColor;
 	Output.Color = float4(finalColor,1);
 	return Output;	
 }
+
 
 technique Point
 {

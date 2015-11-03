@@ -30,7 +30,7 @@ namespace MonoGameTraining
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
-            terrain = new MeshGrid(4, 4, 15);
+            terrain = new MeshGrid(40, 40, 1);
             Content.RootDirectory = "Content";
         }
 
@@ -57,7 +57,7 @@ namespace MonoGameTraining
         protected override void LoadContent()
         {
             if (useCustomShader)
-                effect = Content.Load<Effect>("fxs");
+                effect = Content.Load<Effect>("NewPointLight");
             else
                 effect = Content.Load<Effect>("effects");
             model = Content.Load<Model>("Lantern");
@@ -98,15 +98,15 @@ namespace MonoGameTraining
             }
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
-            effect.Parameters["xWorld"].SetValue(Matrix.Identity);
+            effect.Parameters["xWorld"].SetValue(worldMatrix);
 
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
+                GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
+                //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
             }
 
             //  Lantern1
@@ -118,13 +118,13 @@ namespace MonoGameTraining
         }
         private void SetupCustomShader(Effect effect)
         {
-            effect.CurrentTechnique = effect.Techniques["Point"];
-            effect.Parameters["Light1Position"].SetValue(new Vector3(5, 20, 5));
-            effect.Parameters["Light1Color"].SetValue(new Color(Color.White, 1).ToVector4());
-            effect.Parameters["Light1Range"].SetValue(15.0f);
+            effect.CurrentTechnique = effect.Techniques["SinglePointLight"];
+            effect.Parameters["L1Position"].SetValue(new Vector4(5, 5, 5, 1));
+            //effect.Parameters["L1Color"].SetValue(new Color(Color.White, 1).ToVector4());
+            effect.Parameters["L1Range"].SetValue(15.0f);
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
-            effect.Parameters["Diffuse1Color"].SetValue(new Vector4(1f));
-            effect.Parameters["Specular1Color"].SetValue(new Vector4(1,1,1,200));
+            effect.Parameters["L1DColor"].SetValue(new Vector3(1f));
+            effect.Parameters["L1SColor"].SetValue(new Vector4(1,1,1,200));
 
         }
         private void DrawModel(Model model, Vector3 modelPosition)
