@@ -72,16 +72,17 @@ namespace MonoGameTraining
         {
             for (int i = 0; i < SizeX; i++)
                 for (int j = 0; j < SizeZ; j++)
-                    Vertices[i,j].Normal = Vector3.Zero;
+                    Vertices[i, j].Normal = Vector3.Up;
+                        //Vertices[i,j].Normal = Vector3.Zero;
 
-            foreach (var triangle in Triangles)
-            {
-                RecalculateTriangleNormals(triangle);
-            }
+           // foreach (var triangle in Triangles)
+           // {
+           //     RecalculateTriangleNormals(triangle);
+           // }
 
-           for (int i = 0; i < SizeX; i++)
-                for (int j = 0; j < SizeZ; j++)
-                    Vertices[i,j].Normal.Normalize();
+           //for (int i = 0; i < SizeX; i++)
+           //     for (int j = 0; j < SizeZ; j++)
+           //         Vertices[i,j].Normal.Normalize();
         }
 
         private void RecalculateTriangleNormals(Triangle triangle)

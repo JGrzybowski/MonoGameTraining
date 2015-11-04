@@ -44,7 +44,7 @@ namespace MonoGameTraining
 
             //Setup other matrices
             projectionMatrix = Matrix.CreatePerspectiveFieldOfView(MathHelper.ToRadians(45f), graphics.GraphicsDevice.Viewport.AspectRatio, 0.1f, 1000f);
-            worldMatrix = Matrix.CreateWorld(Vector3.Zero, Vector3.Forward, Vector3.Up);
+            worldMatrix = Matrix.Identity;
 
             //Fill buffer with terrain vertices
             terrain.RecalculateNormals();
@@ -61,6 +61,9 @@ namespace MonoGameTraining
             else
                 effect = Content.Load<Effect>("effects");
             model = Content.Load<Model>("Lantern");
+            foreach (ModelMesh mesh in model.Meshes)
+                foreach (ModelMeshPart meshPart in mesh.MeshParts)
+                    meshPart.Effect = effect.Clone();
         }
 
         protected override void UnloadContent() { }
@@ -96,49 +99,47 @@ namespace MonoGameTraining
                 effect.Parameters["xEnableLighting"].SetValue(true);
                 effect.Parameters["xLightDirection"].SetValue(new Vector3(0,1,0));
             }
+            effect.Parameters["xWorld"].SetValue(worldMatrix);
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
-            effect.Parameters["xWorld"].SetValue(worldMatrix);
 
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
+                //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
+                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
             }
 
             //  Lantern1
-            DrawModel(model, new Vector3(0, 0, 0));
+            DrawModel(model, new Vector3(0, 0, 0), "SinglePointLight");
             //  Lantern2
-            DrawModel(model, new Vector3(9, 0, 5));
+            DrawModel(model, new Vector3(9, 0, 5), "SinglePointLight");
 
             base.Draw(gameTime);
         }
         private void SetupCustomShader(Effect effect)
         {
             effect.CurrentTechnique = effect.Techniques["SinglePointLight"];
-            effect.Parameters["L1Position"].SetValue(new Vector4(5, 5, 5, 1));
-            //effect.Parameters["L1Color"].SetValue(new Color(Color.White, 1).ToVector4());
-            effect.Parameters["L1Range"].SetValue(15.0f);
+            effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["L1Position"].SetValue(new Vector4(0, 15, 0, 1));
+            effect.Parameters["L1Range"].SetValue(100.0f);
             effect.Parameters["L1DColor"].SetValue(new Vector3(1f));
             effect.Parameters["L1SColor"].SetValue(new Vector4(1,1,1,200));
-
         }
-        private void DrawModel(Model model, Vector3 modelPosition)
+        private void DrawModel(Model model, Vector3 modelPosition, string technique )
         {
             foreach (ModelMesh mesh in model.Meshes)
             {
-                foreach (BasicEffect effect in mesh.Effects)
+                foreach (Effect effect in mesh.Effects)
                 {
-                    effect.EnableDefaultLighting();
-                    effect.AmbientLightColor = new Vector3(1f, 0, 0);
-                    effect.DiffuseColor = new Vector3(0.5f, 0.5f, 0.5f);
-                    effect.View = Camera.ViewMatrix;
-                    effect.World = worldMatrix * Matrix.CreateTranslation(modelPosition);
-                    effect.Projection = projectionMatrix;
+                    effect.CurrentTechnique = effect.Techniques[technique];
+                    effect.Parameters["xWorld"].SetValue(Matrix.CreateTranslation(modelPosition));
+                    effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
+                    effect.Parameters["xProjection"].SetValue(projectionMatrix);
+                    SetupCustomShader(effect);
                 }
                 mesh.Draw();
             }

@@ -37,10 +37,11 @@ struct PixelShaderOut {
 //----------------
 VertexShaderOut VSmain (VertexShaderIn input) {
 	VertexShaderOut output = (VertexShaderOut)0;
-	
+	input.Position.w = 1;
+	input.Normal.w = 0;
 	output.WPosition = mul(input.Position, xWorld);
 	output.Position = mul(output.WPosition, xView);
-	output.Position = mul(output.WPosition, xProjection);
+	output.Position = mul(output.Position, xProjection);
 	
 	output.WNormal = normalize(mul(input.Normal, xWorld));
 	output.Color = input.Color; 
@@ -53,10 +54,10 @@ float4 CalculateColor(float4 light, float4 normal, float4 view,
 {
 	float3 diffuse = dot(normal,light) * diffuseColor;
 
-	float4 reflection = reflect(light, normal);
+	float4 reflection = reflect(-light, normal);
 	float3 specular = pow(dot(normal, reflection), abs(specularPower)) * specularColor;
 
-	return float4(diffuse + specular, 1);
+	return float4(saturate(diffuse) + saturate(specular), 1);
 }
 
 PixelShaderOut PSmain(VertexShaderOut input)
@@ -64,7 +65,7 @@ PixelShaderOut PSmain(VertexShaderOut input)
 	PixelShaderOut output = (PixelShaderOut)0;
 
 	float4 normal = normalize(input.WNormal);
-	float4 v = normalize(xCameraPosition- input.WPosition);
+	float4 v = normalize(xCameraPosition - input.WPosition);
 	float4 l1 = normalize(L1Position - input.WPosition);
 
 	float4 c1 = CalculateColor(l1, normal, v, L1DColor, L1SColor.xyz, (int)(L1SColor.w));

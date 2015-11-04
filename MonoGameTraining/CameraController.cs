@@ -12,8 +12,7 @@ namespace MonoGameTraining
     public class CameraController
     {
         public Matrix ViewMatrix { get; private set; }
-
-        Vector3 cameraPosition;
+        public Vector3 CameraPosition { get; private set; }
         float leftrightRot = MathHelper.PiOver2;
         float updownRot = -MathHelper.Pi / 10.0f;
         const float rotationSpeed = 0.3f;
@@ -21,7 +20,8 @@ namespace MonoGameTraining
 
         public CameraController(Vector3 cameraPosition)
         {
-            this.cameraPosition = cameraPosition;
+            this.CameraPosition = cameraPosition;
+            UpdateViewMatrix();
         }
 
         public void Update(float timeDifference)
@@ -64,7 +64,7 @@ namespace MonoGameTraining
         {
             Matrix cameraRotation = Matrix.CreateRotationX(updownRot) * Matrix.CreateRotationY(leftrightRot);
             Vector3 rotatedVector = Vector3.Transform(vectorToAdd, cameraRotation);
-            cameraPosition += moveSpeed * rotatedVector;
+            CameraPosition += moveSpeed * rotatedVector;
             UpdateViewMatrix();
         }
 
@@ -76,11 +76,11 @@ namespace MonoGameTraining
             Vector3 cameraOriginalUpVector = new Vector3(0, 1, 0);
 
             Vector3 cameraRotatedTarget = Vector3.Transform(cameraOriginalTarget, cameraRotation);
-            Vector3 cameraFinalTarget = cameraPosition + cameraRotatedTarget;
+            Vector3 cameraFinalTarget = CameraPosition + cameraRotatedTarget;
 
             Vector3 cameraRotatedUpVector = Vector3.Transform(cameraOriginalUpVector, cameraRotation);
 
-            ViewMatrix = Matrix.CreateLookAt(cameraPosition, cameraFinalTarget, cameraRotatedUpVector);
+            ViewMatrix = Matrix.CreateLookAt(CameraPosition, cameraFinalTarget, cameraRotatedUpVector);
         }
 
     }
