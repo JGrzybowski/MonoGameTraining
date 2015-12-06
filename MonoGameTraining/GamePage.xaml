@@ -10,14 +10,17 @@
     <SwapChainPanel x:Name="swapChainPanel">
         <Grid.RowDefinitions>
             <RowDefinition/>
-            <RowDefinition/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
             <ColumnDefinition />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
+        <CommandBar Grid.Row="1" IsOpen="True">
+            <AppBarButton x:Name="Light1Switch" Click="Light1Switch_Click" Icon="Map"  />
+            <AppBarButton x:Name="Light2Switch" Click="Light2Switch_Click" Icon="Map"  />
+        </CommandBar>
     </SwapChainPanel>
 
 </Page>

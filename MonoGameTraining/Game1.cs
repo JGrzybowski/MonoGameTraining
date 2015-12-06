@@ -10,8 +10,6 @@ namespace MonoGameTraining
     /// </summary>
     public class Game1 : Game
     {
-        private bool useCustomShader = true;
-
         private GraphicsDeviceManager graphics;
 
         Matrix projectionMatrix;
@@ -20,13 +18,17 @@ namespace MonoGameTraining
         //Camera
         public CameraController Camera;
         //Lantern model
-        Model model;
+        Model lanternModel;
+        Model monkeyModel;
         //Terrain
         Effect effect;
         MeshGrid terrain;
         VertexBuffer vertexBuffer;
         VertexPositionColorNormal[] vertexArray;
-        
+        //Lights
+        public PointLight Light1, Light2;
+
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -37,7 +39,7 @@ namespace MonoGameTraining
         protected override void Initialize()
         {
             base.Initialize();
-
+            IsMouseVisible = true;
             //Setup Camera
             Camera = new CameraController(new Vector3(0f, 7f, -15f));
             Camera.ProcessInput(0f);
@@ -51,17 +53,38 @@ namespace MonoGameTraining
             vertexArray = terrain.TriangleVerticesList;
             vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColorNormal), vertexArray.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexArray);
-            
+
+            Light1 = new PointLight()
+            {
+                IsOn = false,
+                Position = new Vector3(10, 15, 10),
+                Range = 10,
+                DiffuseColor = Color.Blue,
+                SpecularColor = Color.DarkCyan,
+                SpecularPower = 200
+            };
+
+            Light2 = new PointLight()
+            {
+                IsOn = true,
+                Position = new Vector3(0, 15, 0),
+                Range = 10,
+                DiffuseColor = Color.OrangeRed,
+                SpecularColor = Color.MediumVioletRed,
+                SpecularPower = 200
+            };
+
         }
         
         protected override void LoadContent()
         {
-            if (useCustomShader)
-                effect = Content.Load<Effect>("NewPointLight");
-            else
-                effect = Content.Load<Effect>("effects");
-            model = Content.Load<Model>("Lantern");
-            foreach (ModelMesh mesh in model.Meshes)
+            effect = Content.Load<Effect>("NewPointLight");
+            lanternModel = Content.Load<Model>("Lantern");
+            monkeyModel = Content.Load<Model>("monkey");
+            foreach (ModelMesh mesh in lanternModel.Meshes)
+                foreach (ModelMeshPart meshPart in mesh.MeshParts)
+                    meshPart.Effect = effect.Clone();
+            foreach (ModelMesh mesh in monkeyModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                     meshPart.Effect = effect.Clone();
         }
@@ -91,55 +114,49 @@ namespace MonoGameTraining
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
             //Shader settings
-            if (useCustomShader)
-                SetupCustomShader(effect);
-            else
-            {
-                effect.CurrentTechnique = effect.Techniques["Colored"];
-                effect.Parameters["xEnableLighting"].SetValue(true);
-                effect.Parameters["xLightDirection"].SetValue(new Vector3(0,1,0));
-            }
-            effect.Parameters["xWorld"].SetValue(worldMatrix);
-            effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
-            effect.Parameters["xProjection"].SetValue(projectionMatrix);
+            SetupCustomShader(effect, new Vector3(0,0,0));
 
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
+                GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
+                //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
             }
 
             //  Lantern1
-            DrawModel(model, new Vector3(0, 0, 0), "SinglePointLight");
+            DrawModel(lanternModel, new Vector3(0, 0, 0), "SinglePointLight");
             //  Lantern2
-            DrawModel(model, new Vector3(9, 0, 5), "SinglePointLight");
+            DrawModel(lanternModel, new Vector3(15, 0, 3), "SinglePointLight");
+            // 
+            DrawModel(monkeyModel, new Vector3(30, 10, 2), "SinglePointLight");
 
             base.Draw(gameTime);
         }
-        private void SetupCustomShader(Effect effect)
+
+        private void SetupCustomShader(Effect effect, Vector3 translation)
         {
             effect.CurrentTechnique = effect.Techniques["SinglePointLight"];
+            effect.Parameters["xWorld"].SetValue(Matrix.CreateTranslation(translation));
+            effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
+            effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
-            effect.Parameters["L1Position"].SetValue(new Vector4(0, 15, 0, 1));
-            effect.Parameters["L1Range"].SetValue(100.0f);
-            effect.Parameters["L1DColor"].SetValue(new Vector3(1f));
-            effect.Parameters["L1SColor"].SetValue(new Vector4(1,1,1,200));
+            Light1.SetEffectParameters(effect, 1);
+            Light2.SetEffectParameters(effect, 2);
+
         }
         private void DrawModel(Model model, Vector3 modelPosition, string technique )
         {
+            if (model == null)
+                return;
             foreach (ModelMesh mesh in model.Meshes)
             {
                 foreach (Effect effect in mesh.Effects)
                 {
                     effect.CurrentTechnique = effect.Techniques[technique];
-                    effect.Parameters["xWorld"].SetValue(Matrix.CreateTranslation(modelPosition));
-                    effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
-                    effect.Parameters["xProjection"].SetValue(projectionMatrix);
-                    SetupCustomShader(effect);
+                    SetupCustomShader(effect, modelPosition);
                 }
                 mesh.Draw();
             }

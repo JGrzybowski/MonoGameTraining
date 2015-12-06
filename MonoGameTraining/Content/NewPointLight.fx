@@ -9,6 +9,7 @@ float4 L1Position, L2Position;
 float3 L1DColor, L2DColor;
 float4 L1SColor, L2SColor;
 float L1Range, L2Range;
+bool L1On,L2On;
 //----------------
 
 //----------------
@@ -50,14 +51,29 @@ VertexShaderOut VSmain (VertexShaderIn input) {
 }
 
 float4 CalculateColor(float4 light, float4 normal, float4 view, 
-						float3 diffuseColor, float3 specularColor, int specularPower)
+						float3 diffuseColor, float3 specularColor, int specularPower, float range)
 {
+	float attenuation = saturate(1 - dot(range, light/ range));
+	
 	float3 diffuse = dot(normal,light) * diffuseColor;
+	//diffuse *= attenuation;
 
 	float4 reflection = reflect(-light, normal);
-	float3 specular = pow(dot(normal, reflection), abs(specularPower)) * specularColor;
+	float3 specular = pow(dot(view, reflection), abs(specularPower)) * specularColor;
+	//specular *= attenuation;
 
 	return float4(saturate(diffuse) + saturate(specular), 1);
+}
+
+float4 CalculateSpotlightColor(float4 light, float4 normal, float4 view,
+	float3 diffuseColor, float3 specularColor, int specularPower, float range, float direction)
+{
+	float c = saturate(dot(-light, direction));
+	
+	if (c > 0)
+		return CalculateColor(light, normal, view, diffuseColor, specularColor, specularPower, range);
+	else
+		return float4(0, 0, 0, 0);
 }
 
 PixelShaderOut PSmain(VertexShaderOut input)
@@ -67,10 +83,16 @@ PixelShaderOut PSmain(VertexShaderOut input)
 	float4 normal = normalize(input.WNormal);
 	float4 v = normalize(xCameraPosition - input.WPosition);
 	float4 l1 = normalize(L1Position - input.WPosition);
+	float4 l2 = normalize(L2Position - input.WPosition);
 
-	float4 c1 = CalculateColor(l1, normal, v, L1DColor, L1SColor.xyz, (int)(L1SColor.w));
-		
-	output.Color = AmbientColor + c1;
+	float4 c1 = CalculateColor(l1, normal, v, L1DColor, L1SColor.xyz, (int)(L1SColor.w), L1Range);
+	float4 c2 = CalculateColor(l2, normal, v, L2DColor, L2SColor.xyz, (int)(L2SColor.w), L2Range);
+	
+	output.Color = AmbientColor;
+	if(L1On)
+		output.Color += c1;
+	if(L2On)
+		output.Color += c2;
 	return output;
 }
 

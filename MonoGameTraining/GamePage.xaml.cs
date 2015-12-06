@@ -33,5 +33,15 @@ namespace MonoGameTraining
             _game = MonoGame.Framework.XamlGame<Game1>.Create(launchArguments, Window.Current.CoreWindow, swapChainPanel);
             swapChainPanel.DataContext = _game;
         }
+
+        private void Light1Switch_Click(object sender, RoutedEventArgs e)
+        {
+            _game.Light1.IsOn = !_game.Light1.IsOn;
+        }
+
+        private void Light2Switch_Click(object sender, RoutedEventArgs e)
+        {
+            _game.Light2.IsOn = !_game.Light2.IsOn;
+        }
     }
 }
