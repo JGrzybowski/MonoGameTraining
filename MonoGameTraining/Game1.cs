@@ -85,6 +85,7 @@ namespace MonoGameTraining
             lanternModel = Content.Load<Model>("Lantern");
             monkeyModel = Content.Load<Model>("monkey");
             grassTexture = Content.Load<Texture2D>("grass");
+            sidewalkTexture = Content.Load<Texture2D>("road");
             foreach (ModelMesh mesh in lanternModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                     meshPart.Effect = effect.Clone();
@@ -147,6 +148,7 @@ namespace MonoGameTraining
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["tex2"].SetValue(sidewalkTexture);
             effect.Parameters["tex1"].SetValue(grassTexture);
             Light1.SetEffectParameters(effect, 1);
             Light2.SetEffectParameters(effect, 2);

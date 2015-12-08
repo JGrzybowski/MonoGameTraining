@@ -11,7 +11,8 @@ float4 L1SColor, L2SColor;
 float L1Range, L2Range;
 bool L1On,L2On;
 //Textures
-Texture2D tex1, tex2;
+Texture2D tex1;
+Texture2D tex2;
 sampler TextureSampler1 = sampler_state { texture = <tex1>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
 sampler TextureSampler2 = sampler_state { texture = <tex2>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
 //----------------
@@ -159,8 +160,9 @@ PixelShaderOut PSTexMain(VertexTextureShaderOut input)
 		output.Color += c2;
 
 	
-	output.Color = tex2D(TextureSampler1, input.TexPosition);
-
+	float4 t1 = output.Color = tex2D(TextureSampler1, input.TexPosition);
+	float4 t2 = output.Color = tex2D(TextureSampler2, input.TexPosition);
+	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w,1);
 	return output;
 }
 
