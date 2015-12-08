@@ -27,6 +27,8 @@ namespace MonoGameTraining
         VertexPositionColorNormal[] vertexArray;
         //Lights
         public PointLight Light1, Light2;
+        //Textures
+        public Texture2D grassTexture, sidewalkTexture;
 
 
         public Game1()
@@ -76,11 +78,13 @@ namespace MonoGameTraining
 
         }
         
+        
         protected override void LoadContent()
         {
             effect = Content.Load<Effect>("NewPointLight");
             lanternModel = Content.Load<Model>("Lantern");
             monkeyModel = Content.Load<Model>("monkey");
+            grassTexture = Content.Load<Texture2D>("grass");
             foreach (ModelMesh mesh in lanternModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                     meshPart.Effect = effect.Clone();
@@ -114,7 +118,7 @@ namespace MonoGameTraining
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
             //Shader settings
-            SetupCustomShader(effect, new Vector3(0,0,0));
+            SetupCustomShader(effect, "TexturedPointLight", new Vector3(0,0,0));
 
             //Rendering
             //  terrain
@@ -135,14 +139,15 @@ namespace MonoGameTraining
             base.Draw(gameTime);
         }
 
-        private void SetupCustomShader(Effect effect, Vector3 translation)
+        private void SetupCustomShader(Effect effect, string techniqueName, Vector3 translation)
         {
-            effect.CurrentTechnique = effect.Techniques["SinglePointLight"];
+            effect.CurrentTechnique = effect.Techniques[techniqueName];
             effect.Parameters["xWorld"].SetValue(Matrix.CreateTranslation(translation));
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["tex1"].SetValue(grassTexture);
             Light1.SetEffectParameters(effect, 1);
             Light2.SetEffectParameters(effect, 2);
 
@@ -156,7 +161,7 @@ namespace MonoGameTraining
                 foreach (Effect effect in mesh.Effects)
                 {
                     effect.CurrentTechnique = effect.Techniques[technique];
-                    SetupCustomShader(effect, modelPosition);
+                    SetupCustomShader(effect, technique, modelPosition);
                 }
                 mesh.Draw();
             }
