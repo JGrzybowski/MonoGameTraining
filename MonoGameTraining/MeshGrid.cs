@@ -27,7 +27,7 @@ namespace MonoGameTraining
                 return string.Format("{0} {1} {2}", Index1, Index2, Index3);
             }
         }
-
+        
         public VertexPositionNormalTexture[,] Vertices;
         public Triangle[] Triangles;
         public BasicEffect basicEffect;

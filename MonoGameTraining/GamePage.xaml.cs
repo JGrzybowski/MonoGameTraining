@@ -43,5 +43,10 @@ namespace MonoGameTraining
         {
             _game.Light2.IsOn = !_game.Light2.IsOn;
         }
+
+        private void TerrainSwitch_Click(object sender, RoutedEventArgs e)
+        {
+            _game.GrassTextureIndex = (_game.GrassTextureIndex == 0) ? 1 : 0;
+        }
     }
 }

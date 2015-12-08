@@ -110,7 +110,7 @@ technique SinglePointLight
 	}
 }
 
-//----------------TEXTURED SHADER
+//---------------SIMPLE TEXTURED
 struct VertexTextureShaderIn {
 	float4 Position : SV_POSITION0;
 	float4 Normal : NORMAL0;
@@ -124,6 +124,42 @@ struct VertexTextureShaderOut {
 	float4 WNormal : TEXCOORD1;
 	float4 TexPosition : TEXCOORD2;
 };
+
+
+VertexTextureShaderOut VSSimpleTexMain(VertexTextureShaderIn input) {
+	VertexTextureShaderOut output = (VertexTextureShaderOut)0;
+	input.Position.w = 1;
+	input.Normal.w = 0;
+	output.WPosition = mul(input.Position, xWorld);
+	output.Position = mul(output.WPosition, xView);
+	output.Position = mul(output.Position, xProjection);
+	output.TexPosition = input.TexPosition;
+
+	return output;
+}
+
+PixelShaderOut PSSimpleTexMain(VertexTextureShaderOut input)
+{
+	PixelShaderOut output = (PixelShaderOut)0;
+	float4 t1 = output.Color = tex2D(TextureSampler1, input.TexPosition);
+	float4 t2 = output.Color = tex2D(TextureSampler2, input.TexPosition);
+	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w, 1);
+	return output;
+}
+
+technique SimpleTextured
+{
+	pass Pass0
+	{
+		VertexShader = compile vs_4_0 VSSimpleTexMain();
+		PixelShader = compile ps_4_0 PSSimpleTexMain();
+	}
+};
+
+
+
+//----------------TEXTURED WITH LIGHT SHADER
+
 
 //-------------
 

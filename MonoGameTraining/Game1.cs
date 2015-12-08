@@ -23,12 +23,15 @@ namespace MonoGameTraining
         //Terrain
         Effect effect;
         MeshGrid terrain;
+        Skybox skybox;
         VertexBuffer vertexBuffer;
         VertexPositionNormalTexture[] vertexArray;
         //Lights
         public PointLight Light1, Light2;
         //Textures
-        public Texture2D grassTexture, sidewalkTexture;
+        public int GrassTextureIndex = 0;
+        private  Texture2D[] grassTextures = new Texture2D[2];
+        private Texture2D sidewalkTexture;
 
 
         public Game1()
@@ -81,10 +84,14 @@ namespace MonoGameTraining
         
         protected override void LoadContent()
         {
+            //skybox = new Skybox("SkyBox", Content);
             effect = Content.Load<Effect>("NewPointLight");
             lanternModel = Content.Load<Model>("Lantern");
             monkeyModel = Content.Load<Model>("monkey");
-            grassTexture = Content.Load<Texture2D>("grass");
+
+            grassTextures[0] = Content.Load<Texture2D>("grass");
+            grassTextures[1] = Content.Load<Texture2D>("lava");
+
             sidewalkTexture = Content.Load<Texture2D>("road");
             foreach (ModelMesh mesh in lanternModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
@@ -119,7 +126,7 @@ namespace MonoGameTraining
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
             //Shader settings
-            SetupCustomShader(effect, "TexturedPointLight", new Vector3(0,0,0));
+            SetupCustomShader(effect, "SimpleTextured", new Vector3(0,0,0));
 
             //Rendering
             //  terrain
@@ -148,8 +155,8 @@ namespace MonoGameTraining
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["tex1"].SetValue(grassTextures[GrassTextureIndex]);
             effect.Parameters["tex2"].SetValue(sidewalkTexture);
-            effect.Parameters["tex1"].SetValue(grassTexture);
             Light1.SetEffectParameters(effect, 1);
             Light2.SetEffectParameters(effect, 2);
 

@@ -20,6 +20,7 @@
         <CommandBar Grid.Row="1" IsOpen="True">
             <AppBarButton x:Name="Light1Switch" Click="Light1Switch_Click" Icon="Map"  />
             <AppBarButton x:Name="Light2Switch" Click="Light2Switch_Click" Icon="Map"  />
+            <AppBarButton x:Name="TerrainSwitch" Click="TerrainSwitch_Click" Icon="Globe"  />
         </CommandBar>
     </SwapChainPanel>
 
