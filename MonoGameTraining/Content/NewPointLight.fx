@@ -12,8 +12,8 @@ float L1Range, L2Range;
 bool L1On,L2On;
 //Textures
 Texture2D tex1, tex2;
-sampler TextureSampler1 = sampler_state { texture = <tex1>; magfilter = LINEAR; minfilter = LINEAR; mipfilter = LINEAR; AddressU = mirror; AddressV = mirror; };
-sampler TextureSampler2 = sampler_state { texture = <tex2>; magfilter = LINEAR; minfilter = LINEAR; mipfilter = LINEAR; AddressU = mirror; AddressV = mirror; };
+sampler TextureSampler1 = sampler_state { texture = <tex1>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
+sampler TextureSampler2 = sampler_state { texture = <tex2>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
 //----------------
 
 //----------------
@@ -113,7 +113,7 @@ technique SinglePointLight
 struct VertexTextureShaderIn {
 	float4 Position : SV_POSITION0;
 	float4 Normal : NORMAL0;
-	float4 TexPosition : TEXTCOORD0;
+	float4 TexPosition : TEXCOORD0;
 };
 
 
@@ -158,7 +158,8 @@ PixelShaderOut PSTexMain(VertexTextureShaderOut input)
 	if (L2On)
 		output.Color += c2;
 
-	output.Color = tex2Dlod(TextureSampler1, input.TexPosition);
+	
+	output.Color = tex2D(TextureSampler1, input.TexPosition);
 
 	return output;
 }
@@ -169,6 +170,6 @@ technique TexturedPointLight
 	pass Pass0
 	{
 		VertexShader = compile vs_4_0 VSTexMain();
-		VertexShader = compile vs_4_0 PSTexMain();
+		PixelShader = compile ps_4_0 PSTexMain();
 	}
 };

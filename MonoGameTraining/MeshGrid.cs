@@ -28,7 +28,7 @@ namespace MonoGameTraining
             }
         }
 
-        public VertexPositionColorNormal[,] Vertices;
+        public VertexPositionNormalTexture[,] Vertices;
         public Triangle[] Triangles;
         public BasicEffect basicEffect;
         //private GraphicsDevice device;
@@ -44,13 +44,15 @@ namespace MonoGameTraining
             //basicEffect = new BasicEffect(device);
             this.sizeX = sizeX;
             this.sizeZ = sizeZ;
-            this.Vertices = new VertexPositionColorNormal[sizeX + 1, sizeZ + 1];
+            this.Vertices = new VertexPositionNormalTexture[sizeX + 1, sizeZ + 1];
             this.Triangles = new Triangle[sizeX*sizeZ*2];
             var rand = new Random();
 
+            int texParam = 2;
+
             for (int x = 0; x < sizeX+1; x++)
                 for (int z = 0; z < sizeZ+1; z++)
-                    this.Vertices[x, z] = new VertexPositionColorNormal(new Vector3(squareSideSize*x, 0, squareSideSize*z), new Color(0, 0.5f, 0.2f), Vector3.Up);
+                    this.Vertices[x, z] = new VertexPositionNormalTexture(new Vector3(squareSideSize*x, 0, squareSideSize*z), Vector3.Up, new Vector2(texParam * (float)x/(float)SizeX,texParam * (float)z/(float)SizeZ));
 
             //for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
 
@@ -62,7 +64,7 @@ namespace MonoGameTraining
                 } 
         }
 
-        public VertexPositionColorNormal this[int x, int z]
+        public VertexPositionNormalTexture this[int x, int z]
         {
             get { return Vertices[x, z]; }
             set { Vertices[x, z] = value; }
@@ -97,11 +99,11 @@ namespace MonoGameTraining
         }
 
 
-        public VertexPositionColorNormal[] TriangleVerticesList
+        public VertexPositionNormalTexture[] TriangleVerticesList
         {
             get
             {
-                List<VertexPositionColorNormal> list = new List<VertexPositionColorNormal>();
+                List<VertexPositionNormalTexture> list = new List<VertexPositionNormalTexture>();
                 foreach (var triangle in Triangles)
                 {
                     list.Add(Vertices[triangle.Index1.X, triangle.Index1.Y]);

@@ -24,7 +24,7 @@ namespace MonoGameTraining
         Effect effect;
         MeshGrid terrain;
         VertexBuffer vertexBuffer;
-        VertexPositionColorNormal[] vertexArray;
+        VertexPositionNormalTexture[] vertexArray;
         //Lights
         public PointLight Light1, Light2;
         //Textures
@@ -53,7 +53,7 @@ namespace MonoGameTraining
             //Fill buffer with terrain vertices
             terrain.RecalculateNormals();
             vertexArray = terrain.TriangleVerticesList;
-            vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionColorNormal), vertexArray.Length, BufferUsage.WriteOnly);
+            vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionNormalTexture), vertexArray.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexArray);
 
             Light1 = new PointLight()
@@ -126,7 +126,7 @@ namespace MonoGameTraining
             {
                 pass.Apply();
                 GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
-                //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionColorNormal.VertexDeclaration);
+                //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionNormalTexture.VertexDeclaration);
             }
 
             //  Lantern1
