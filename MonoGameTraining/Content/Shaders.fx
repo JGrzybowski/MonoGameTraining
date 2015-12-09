@@ -21,44 +21,39 @@ sampler TextureSampler1 = sampler_state { magfilter = POINT; minfilter = POINT; 
 sampler TextureSampler2 = sampler_state { magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
 //----------------
 
-//----------------
-//Structures
-//----------------
-struct VertexColorShaderIn {
+//--Structures----------
+struct VSColorInput {
 	float4 Position : SV_POSITION0;
 	float4 Color : COLOR0;
 	float4 Normal : NORMAL0;
 };
 
-struct VertexColorShaderOut {
+struct VSColorOutput {
 	float4 Position : SV_POSITION0;
 	float4 WPosition : TEXCOORD0;
 	float4 Color : COLOR0;
 	float4 WNormal : TEXCOORD1;
 };
 
-struct VertexTextureShaderIn {
+struct VSTextureInput {
 	float4 Position : SV_POSITION0;
 	float4 Normal : NORMAL0;
 	float4 TexPosition : TEXCOORD0;
 };
 
-
-struct VertexTextureShaderOut {
+struct VSTextureOutput {
 	float4 Position : SV_POSITION0;
 	float4 WPosition : TEXCOORD0;
 	float4 WNormal : TEXCOORD1;
 	float4 TexPosition : TEXCOORD2;
 };
 
-struct PixelShaderOut {
+struct PSOutput {
 	float4 Color : COLOR0;
 };
 
 
-//----------------
-//Functions
-//----------------
+//--Functions----------
 float4 CalculateColor(float4 light, float4 normal, float4 view, 
 						float3 diffuseColor, float3 specularColor, int specularPower, float range)
 {
@@ -103,42 +98,48 @@ float4 ApplyFog(float4 inColor, float4 position)
 	return inColor * fog;
 }
 
-float4 ApplyTexture(float inColor, int texN, int samplerN, float2 texCoordinates)
+float4 ApplyTexture(float4 inColor, texture2D tex, sampler sam, float2 texCoordinates)
 {
-	texture2D tex; 
-	if (texN == 1)
-		tex = tex1;
-	if (texN == 2)
-		tex = tex2;
-
-	sampler sam;
-	if (samplerN == 1)
-		sam = TextureSampler1;
-	if (samplerN == 2)
-		sam = TextureSampler2;
-
 	float4 tColor = tex.Sample(sam, texCoordinates);
-	return float4((1 - tColor.w)*inColor + tColor.xyz*tColor.w, 1);
+	return float4((1 - tColor.w)*inColor + tColor.xyz * tColor.w, 1);
 }
 
-VertexColorShaderOut VSmain(VertexColorShaderIn input) 
+
+//--Shaders----------
+
+//--Vertex shaders--------
+VSColorOutput VSColor(VSColorInput input) 
 {
-	VertexColorShaderOut output = (VertexColorShaderOut)0;
+	VSColorOutput output = (VSColorOutput)0;
 	input.Position.w = 1;
 	input.Normal.w = 0;
+
 	output.WPosition = mul(input.Position, xWorld);
 	output.Position = mul(output.WPosition, xView);
 	output.Position = mul(output.Position, xProjection);
-
 	output.WNormal = normalize(mul(input.Normal, xWorld));
+	
 	output.Color = input.Color;
+	return output;
+}
+VSTextureOutput VSTexture(VSTextureInput input) {
+	VSTextureOutput output = (VSTextureOutput)0;
+	input.Position.w = 1;
+	input.Normal.w = 0;
 
+	output.WPosition = mul(input.Position, xWorld);
+	output.Position = mul(output.WPosition, xView);
+	output.Position = mul(output.Position, xProjection);
+	output.WNormal = normalize(mul(input.Normal, xWorld));
+
+	output.TexPosition = input.TexPosition;
 	return output;
 }
 
-PixelShaderOut PSmain(VertexColorShaderOut input)
+//--Pixel shaders
+PSOutput PSColor(VSColorOutput input)
 {
-	PixelShaderOut output = (PixelShaderOut)0;
+	PSOutput output = (PSOutput)0;
 
 	float4 normal = normalize(input.WNormal);
 	float4 v = normalize(xCameraPosition - input.WPosition);
@@ -152,41 +153,24 @@ PixelShaderOut PSmain(VertexColorShaderOut input)
 		output.Color = ApplyPointLight(output.Color, l2, normal, v, 2);
 	return output;
 }
-
-
-
-//---------------SIMPLE TEXTURED
-VertexTextureShaderOut VSSimpleTexMain(VertexTextureShaderIn input) {
-	VertexTextureShaderOut output = (VertexTextureShaderOut)0;
-	input.Position.w = 1;
-	input.Normal.w = 0;
-	output.WPosition = mul(input.Position, xWorld);
-	output.Position = mul(output.WPosition, xView);
-	output.Position = mul(output.Position, xProjection);
-	output.TexPosition = input.TexPosition;
-
+PSOutput PSTextureOnly(VSTextureOutput input)
+{
+	PSOutput output = (PSOutput)0;
+	output.Color = ApplyTexture(output.Color, tex1, TextureSampler1, input.TexPosition);
 	return output;
 }
-
-PixelShaderOut PSSingleTexMain(VertexTextureShaderOut input)
+PSOutput PSTwoTextureOnly(VSTextureOutput input)
 {
-	PixelShaderOut output = (PixelShaderOut)0;
-	output.Color = tex1.Sample(TextureSampler1, input.TexPosition);
-	return output;
-}
+	PSOutput output = (PSOutput)0;
 
-PixelShaderOut PSDoubleTexMain(VertexTextureShaderOut input)
-{
-	PixelShaderOut output = (PixelShaderOut)0;
-	float4 t1 = tex1.Sample(TextureSampler1, input.TexPosition);
-	float4 t2 = tex2.Sample(TextureSampler2, input.TexPosition);
-	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w, 1);
+	output.Color = ApplyTexture(output.Color, tex1, TextureSampler1, input.TexPosition);
+	output.Color = ApplyTexture(output.Color, tex2, TextureSampler2, input.TexPosition);
 	return output;
 }
 
 //----------------TEXTURED WITH LIGHT SHADER
-VertexTextureShaderOut VSLightMain(VertexTextureShaderIn input) {
-	VertexTextureShaderOut output = (VertexTextureShaderOut)0;
+VSTextureOutput VSLightMain(VSTextureInput input) {
+	VSTextureOutput output = (VSTextureOutput)0;
 	input.Position.w = 1;
 	input.Normal.w = 0;
 	output.WPosition = mul(input.Position, xWorld);
@@ -199,9 +183,9 @@ VertexTextureShaderOut VSLightMain(VertexTextureShaderIn input) {
 	return output;
 }
 
-PixelShaderOut PSLightMain(VertexTextureShaderOut input)
+PSOutput PSLightMain(VSTextureOutput input)
 {
-	PixelShaderOut output = (PixelShaderOut)0;
+	PSOutput output = (PSOutput)0;
 
 	float4 normal = normalize(input.WNormal);
 	float4 v = normalize(xCameraPosition - input.WPosition);
@@ -226,16 +210,13 @@ PixelShaderOut PSLightMain(VertexTextureShaderOut input)
 	return output;
 }
 
-//----------------
-//Techniques
-//----------------
-
+//--Techniques------------
 technique SingleTextured
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_4_0 VSSimpleTexMain();
-		PixelShader = compile ps_4_0 PSSingleTexMain();
+		VertexShader = compile vs_4_0 VSTexture();
+		PixelShader = compile ps_4_0 PSTextureOnly();
 	}
 };
 
@@ -243,8 +224,8 @@ technique DoubleTextured
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_4_0 VSSimpleTexMain();
-		PixelShader = compile ps_4_0 PSDoubleTexMain();
+		VertexShader = compile vs_4_0 VSTexture();
+		PixelShader = compile ps_4_0 PSTwoTextureOnly();
 	}
 };
 
@@ -252,8 +233,8 @@ technique SinglePointLight
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_4_0 VSmain();
-		PixelShader = compile ps_4_0 PSmain();
+		VertexShader = compile vs_4_0 VSColor();
+		PixelShader = compile ps_4_0 PSColor();
 	}
 }
 
