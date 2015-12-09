@@ -39,24 +39,24 @@ namespace MonoGameTraining
             this.Size = size;
             this.Vertices = new VertexPositionNormalTexture[14]
             {
-                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, new Vector2(0f,0.33f)),
-                new VertexPositionNormalTexture(size*new Vector3(1,0,0), Vector3.Up, new Vector2(0.25f,0.33f)),
-                new VertexPositionNormalTexture(size*new Vector3(1,0,1), Vector3.Up, new Vector2(0.5f,0.33f)),
-                new VertexPositionNormalTexture(size*new Vector3(0,0,1), Vector3.Up, new Vector2(0.75f,0.33f)),
-                new VertexPositionNormalTexture(size*new Vector3(0,1,1), Vector3.Up, new Vector2(0.75f,0.66f)),
-                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, new Vector2(0f,0.66f)),
-                new VertexPositionNormalTexture(size*new Vector3(1,1,0), Vector3.Up, new Vector2(0.25f,0.66f)),
-                new VertexPositionNormalTexture(size*new Vector3(1,1,1), Vector3.Up, new Vector2(0.5f,0.66f)),
+                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, texCoordinates[0]),
+                new VertexPositionNormalTexture(size*new Vector3(1,0,0), Vector3.Up, texCoordinates[1]),
+                new VertexPositionNormalTexture(size*new Vector3(1,0,1), Vector3.Up, texCoordinates[2]),
+                new VertexPositionNormalTexture(size*new Vector3(0,0,1), Vector3.Up, texCoordinates[3]),
+                new VertexPositionNormalTexture(size*new Vector3(0,1,1), Vector3.Up, texCoordinates[4]),
+                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, texCoordinates[5]),
+                new VertexPositionNormalTexture(size*new Vector3(1,1,0), Vector3.Up, texCoordinates[6]),
+                new VertexPositionNormalTexture(size*new Vector3(1,1,1), Vector3.Up, texCoordinates[7]),
                 //Additional 0 vertices
-                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, new Vector2(0.75f,0f)),
-                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, new Vector2(1f,0.33f)),
+                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, texCoordinates[8]),
+                new VertexPositionNormalTexture(size*new Vector3(0,0,0), Vector3.Up, texCoordinates[9]),
                 //Additional 1 vertice
-                new VertexPositionNormalTexture(size*new Vector3(1,0,0), Vector3.Up, new Vector2(0.75f,0f)),
+                new VertexPositionNormalTexture(size*new Vector3(1,0,0), Vector3.Up, texCoordinates[10]),
                 //Additional 5 vertices
-                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, new Vector2(0.75f,1f)),
-                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, new Vector2(1f,0.66f)),
+                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, texCoordinates[11]),
+                new VertexPositionNormalTexture(size*new Vector3(0,1,0), Vector3.Up, texCoordinates[12]),
                 //Additional 6 vertice
-                new VertexPositionNormalTexture(size*new Vector3(1,1,0), Vector3.Up, new Vector2(0.5f,1f))
+                new VertexPositionNormalTexture(size*new Vector3(1,1,0), Vector3.Up, texCoordinates[13])
             };
             this.Triangles = new Triangle[12] {
                 new Triangle(8,10,2),
@@ -68,8 +68,8 @@ namespace MonoGameTraining
                 new Triangle(7,1,2),
                 new Triangle(7,2,3),
                 new Triangle(7,3,4),
-                new Triangle(7,4,12),
-                new Triangle(7,12,13),
+                new Triangle(7,4,11),
+                new Triangle(7,11,13),
                 new Triangle(7,6,1)
             };
         }
@@ -88,6 +88,23 @@ namespace MonoGameTraining
                 return list.ToArray();
             }
         }
+
+        private static Vector2[] texCoordinates = new Vector2[14] {
+            new Vector2(0f,0.34f),
+            new Vector2(0.25f,0.34f),
+            new Vector2(0.5f, 0.34f),
+            new Vector2(0.75f, 0.34f),
+            new Vector2(0.75f, 0.66f),
+            new Vector2(0.0f, 0.66f),
+            new Vector2(0.25f, 0.66f),
+            new Vector2(0.5f, 0.66f),
+            new Vector2(0.75f, 0f),
+            new Vector2(1.0f, 0.34f),
+            new Vector2(0.5f, 0f),
+            new Vector2(0.75f, 1.0f),
+            new Vector2(1.0f, 0.66f),
+            new Vector2(0.5f, 1.0f)
+        };
 
     }
 }
