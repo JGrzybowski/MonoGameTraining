@@ -13,7 +13,7 @@ bool L1On,L2On;
 //Fog
 float fogStart = 1;
 float fogEnd = 100;
-float4 fogColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
+float4 fogColor = float4(1.0f, 1.0f, 1.0f, 0.8f);
 //Textures
 Texture2D tex1;
 Texture2D tex2;
@@ -22,12 +22,12 @@ sampler TextureSampler2 = sampler_state { magfilter = POINT; minfilter = POINT; 
 //----------------
 
 //--Structures----------
-struct VSColorInput {
+struct VSColorInput 
+{
 	float4 Position : SV_POSITION0;
 	float4 Color : COLOR0;
 	float4 Normal : NORMAL0;
 };
-
 struct VSColorOutput {
 	float4 Position : SV_POSITION0;
 	float4 WPosition : TEXCOORD0;
@@ -40,7 +40,6 @@ struct VSTextureInput {
 	float4 Normal : NORMAL0;
 	float4 TexPosition : TEXCOORD0;
 };
-
 struct VSTextureOutput {
 	float4 Position : SV_POSITION0;
 	float4 WPosition : TEXCOORD0;
@@ -54,6 +53,10 @@ struct PSOutput {
 
 
 //--Functions----------
+float4 MixColors(float4 c1, float4 c2)
+{
+	return float4((1 - c2.w)*c1+ c2.xyz * c2.w, 1);
+}
 float4 CalculateColor(float4 light, float4 normal, float4 view, 
 						float3 diffuseColor, float3 specularColor, int specularPower, float range, float distance)
 {
@@ -92,16 +95,16 @@ float4 ApplyPointLight(float4 inColor, float4 light, float distance, float4 norm
 //position => WPosition
 float4 ApplyFog(float4 inColor, float4 position) 
 {
-	float fogFactor = saturate((fogEnd - (xCameraPosition - position)) / (fogEnd - fogStart));
-	float4 fog = fogFactor + (1.0 - fogFactor) * fogColor;
-
-	return inColor * fog;
+	float fogFactor = saturate((length(xCameraPosition - position) - fogStart) / (fogEnd - fogStart));
+	float4 fog = fogFactor * fogColor;
+	
+	return MixColors(inColor, fog);
 }
 
 float4 ApplyTexture(float4 inColor, texture2D tex, sampler sam, float2 texCoordinates)
 {
 	float4 tColor = tex.Sample(sam, texCoordinates);
-	return float4((1 - tColor.w)*inColor + tColor.xyz * tColor.w, 1);
+	return MixColors(inColor, tColor);
 }
 
 
@@ -184,6 +187,8 @@ PSOutput PSTextureAndLight(VSTextureOutput input)
 		output.Color = ApplyPointLight(output.Color, l1, dist1, normal, v, 1);
 	if (L2On)
 		output.Color = ApplyPointLight(output.Color, l2, dist2, normal, v, 2);
+
+	output.Color = ApplyFog(output.Color, input.WPosition);
 	return output;
 }
 
