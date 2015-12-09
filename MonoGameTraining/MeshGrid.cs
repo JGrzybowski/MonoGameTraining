@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using SimplexNoise;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -52,9 +53,10 @@ namespace MonoGameTraining
 
             for (int x = 0; x < sizeX+1; x++)
                 for (int z = 0; z < sizeZ+1; z++)
-                    this.Vertices[x, z] = new VertexPositionNormalTexture(new Vector3(squareSideSize*x, 0, squareSideSize*z), Vector3.Up, new Vector2(texParam * (float)x/(float)SizeX,texParam * (float)z/(float)SizeZ));
-
-            //for(int i=0; i<20; i++) { Vertices[rand.Next(SizeX), rand.Next(SizeZ)].Position.Y += 1; }
+                    this.Vertices[x, z] = new VertexPositionNormalTexture(
+                        new Vector3(squareSideSize*x, Noise.Generate(x, z)/4, squareSideSize*z), 
+                        Vector3.Up, 
+                        new Vector2(texParam * (float)x/(float)SizeX,texParam * (float)z/(float)SizeZ));
 
             for (int x = 0; x < sizeX; x++)
                 for (int z = 0; z < sizeZ; z++)
