@@ -19,6 +19,9 @@ namespace MonoGameTraining
         //Camera
         public CameraController Camera;
         //Lantern model
+        Vector3 lantern1Position = new Vector3(5, 0, 10);
+        Vector3 lantern2Position = new Vector3(20, 0, 25);
+
         Model lanternModel;
         Model monkeyModel;
         //Terrain
@@ -42,7 +45,7 @@ namespace MonoGameTraining
         {
             graphics = new GraphicsDeviceManager(this);
             cube = new TexturedCube(1000);
-            terrain = new MeshGrid(40, 40, 1);
+            terrain = new MeshGrid(200, 200, 1);
             Content.RootDirectory = "Content";
         }
 
@@ -72,19 +75,19 @@ namespace MonoGameTraining
             Light1 = new PointLight()
             {
                 IsOn = false,
-                Position = new Vector3(10, 15, 10),
-                Range = 10,
-                DiffuseColor = Color.Blue,
-                SpecularColor = Color.DarkCyan,
+                Position = lantern1Position + new Vector3(0, 10, 0),
+                Range = 35,
+                DiffuseColor = Color.LightYellow,
+                SpecularColor = Color.YellowGreen,
                 SpecularPower = 200
             };
 
             Light2 = new PointLight()
             {
                 IsOn = true,
-                Position = new Vector3(0, 15, 0),
-                Range = 10,
-                DiffuseColor = Color.OrangeRed,
+                Position = lantern2Position + new Vector3(0, 10, 0),
+                Range = 35,
+                DiffuseColor = Color.Yellow,
                 SpecularColor = Color.MediumVioletRed,
                 SpecularPower = 200
             };
@@ -138,6 +141,7 @@ namespace MonoGameTraining
             //Shader settings
             SetupCustomShader(effect, new Vector3(0, 0, 0));
             SetupTextureShader(effect, "DoubleTextured", grassTextures[GrassTextureIndex], sidewalkTexture);
+            SetupPointLightShader(effect, "TexturedPointLight");
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -158,11 +162,11 @@ namespace MonoGameTraining
 
 
             //  Lantern1
-            DrawModel(lanternModel, new Vector3(0, 0, 0), "SinglePointLight");
+            DrawModel(lanternModel, lantern1Position, "PointLightsOnly");
             //  Lantern2
-            DrawModel(lanternModel, new Vector3(15, 0, 3), "SinglePointLight");
+            DrawModel(lanternModel, lantern2Position, "PointLightsOnly");
             // 
-            DrawModel(monkeyModel, new Vector3(30, 10, 2), "SinglePointLight");
+            DrawModel(monkeyModel, new Vector3(30, 10, 2), "PointLightsOnly");
 
             base.Draw(gameTime);
         }
@@ -187,7 +191,7 @@ namespace MonoGameTraining
         private void SetupPointLightShader(Effect effect, string techniqueName)
         {
             effect.CurrentTechnique = effect.Techniques[techniqueName];
-            effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
+            effect.Parameters["AmbientColor"].SetValue(new Vector4(0.5f, 0.5f, 0.5f,1f));
             Light1.SetEffectParameters(effect, 1);
             Light2.SetEffectParameters(effect, 2);
         }

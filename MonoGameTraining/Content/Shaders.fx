@@ -3,7 +3,7 @@
 //----------------
 float4x4 xWorld, xView, xProjection, xWorldIT;
 float4 xCameraPosition;
-float4 AmbientColor;
+float4 AmbientColor = float4(0.3,0.3,0.3,1);
 //PointLights
 float4 L1Position, L2Position;
 float3 L1DColor, L2DColor;
@@ -55,38 +55,38 @@ struct PSOutput {
 
 //--Functions----------
 float4 CalculateColor(float4 light, float4 normal, float4 view, 
-						float3 diffuseColor, float3 specularColor, int specularPower, float range)
+						float3 diffuseColor, float3 specularColor, int specularPower, float range, float distance)
 {
 
-	float attenuation = saturate(1 - dot(range, light/ range));
+	float attenuation = saturate((range - distance)/range);
 	
 	float3 diffuse = dot(normal,light) * diffuseColor;
-	//diffuse *= attenuation;
+	diffuse *= attenuation;
 
 	float4 reflection = reflect(-light, normal);
 	float3 specular = pow(dot(view, reflection), abs(specularPower)) * specularColor;
-	//specular *= attenuation;
+	specular *= attenuation;
 
 	return float4(saturate(diffuse) + saturate(specular), 1);
 }
 
-float4 CalculateSpotlightColor(float4 light, float4 normal, float4 view,
-								float3 diffuseColor, float3 specularColor, int specularPower, float range, float direction)
-{
-	float c = saturate(dot(-light, direction));
-	
-	if (c > 0)
-		return CalculateColor(light, normal, view, diffuseColor, specularColor, specularPower, range);
-	else
-		return float4(0, 0, 0, 0);
-}
+//float4 CalculateSpotlightColor(float4 light, float4 normal, float4 view,
+//								float3 diffuseColor, float3 specularColor, int specularPower, float range, float direction)
+//{
+//	float c = saturate(dot(-light, direction));
+//	
+//	if (c > 0)
+//		return CalculateColor(light, normal, view, diffuseColor, specularColor, specularPower, range, );
+//	else
+//		return float4(0, 0, 0, 0);
+//}
 
-float4 ApplyPointLight(float4 inColor, float4 light, float4 normal, float4 view, int lightN)
+float4 ApplyPointLight(float4 inColor, float4 light, float distance, float4 normal, float4 view, int lightN)
 {
 	if(lightN == 1)
-		return inColor + CalculateColor(light, normal, view, L1DColor, L1SColor.xyz, (int)(L1SColor.w), L1Range);
+		return inColor + CalculateColor(light, normal, view, L1DColor, L1SColor.xyz, (int)(L1SColor.w), L1Range, distance);
 	if(lightN == 2)
-		return inColor + CalculateColor(light, normal, view, L2DColor, L2SColor.xyz, (int)(L2SColor.w), L2Range);
+		return inColor + CalculateColor(light, normal, view, L2DColor, L2SColor.xyz, (int)(L2SColor.w), L2Range, distance);
 }
 
 //position => WPosition
@@ -144,13 +144,15 @@ PSOutput PSColor(VSColorOutput input)
 	float4 normal = normalize(input.WNormal);
 	float4 v = normalize(xCameraPosition - input.WPosition);
 	float4 l1 = normalize(L1Position - input.WPosition);
+	float dist1 = length(L1Position - input.WPosition);
 	float4 l2 = normalize(L2Position - input.WPosition);
+	float dist2 = length(L2Position - input.WPosition);
 
 	output.Color = input.Color * AmbientColor;
 	if(L1On)
-		output.Color = ApplyPointLight(output.Color, l1, normal, v, 1);
+		output.Color = ApplyPointLight(output.Color, l1, dist1, normal, v, 1);
 	if (L2On)
-		output.Color = ApplyPointLight(output.Color, l2, normal, v, 2);
+		output.Color = ApplyPointLight(output.Color, l2, dist2, normal, v, 2);
 	return output;
 }
 PSOutput PSTextureOnly(VSTextureOutput input)
@@ -162,51 +164,26 @@ PSOutput PSTextureOnly(VSTextureOutput input)
 PSOutput PSTwoTextureOnly(VSTextureOutput input)
 {
 	PSOutput output = (PSOutput)0;
-
 	output.Color = ApplyTexture(output.Color, tex1, TextureSampler1, input.TexPosition);
 	output.Color = ApplyTexture(output.Color, tex2, TextureSampler2, input.TexPosition);
 	return output;
 }
-
-//----------------TEXTURED WITH LIGHT SHADER
-VSTextureOutput VSLightMain(VSTextureInput input) {
-	VSTextureOutput output = (VSTextureOutput)0;
-	input.Position.w = 1;
-	input.Normal.w = 0;
-	output.WPosition = mul(input.Position, xWorld);
-	output.Position = mul(output.WPosition, xView);
-	output.Position = mul(output.Position, xProjection);
-
-	output.WNormal = normalize(mul(input.Normal, xWorld));
-	output.TexPosition = input.TexPosition;
-
-	return output;
-}
-
-PSOutput PSLightMain(VSTextureOutput input)
+PSOutput PSTextureAndLight(VSTextureOutput input) 
 {
-	PSOutput output = (PSOutput)0;
-
+	PSOutput output = PSTwoTextureOnly(input);
+	
 	float4 normal = normalize(input.WNormal);
 	float4 v = normalize(xCameraPosition - input.WPosition);
 	float4 l1 = normalize(L1Position - input.WPosition);
+	float dist1 = length(L1Position - input.WPosition);
 	float4 l2 = normalize(L2Position - input.WPosition);
+	float dist2 = length(L2Position - input.WPosition);
 
-	float4 c1 = CalculateColor(l1, normal, v, L1DColor, L1SColor.xyz, (int)(L1SColor.w), L1Range);
-	float4 c2 = CalculateColor(l2, normal, v, L2DColor, L2SColor.xyz, (int)(L2SColor.w), L2Range);
-
-	output.Color = AmbientColor;
+	output.Color = output.Color * AmbientColor;
 	if (L1On)
-		output.Color += c1;
+		output.Color = ApplyPointLight(output.Color, l1, dist1, normal, v, 1);
 	if (L2On)
-		output.Color += c2;
-
-	
-	float4 t1 = output.Color = tex2D(TextureSampler1, input.TexPosition);
-	float4 t2 = output.Color = tex2D(TextureSampler2, input.TexPosition);
-	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w,1);
-
-	
+		output.Color = ApplyPointLight(output.Color, l2, dist2, normal, v, 2);
 	return output;
 }
 
@@ -229,7 +206,7 @@ technique DoubleTextured
 	}
 };
 
-technique SinglePointLight
+technique PointLightsOnly
 {
 	pass Pass0
 	{
@@ -242,7 +219,7 @@ technique TexturedPointLight
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_4_0 VSLightMain();
-		PixelShader = compile ps_4_0 PSLightMain();
+		VertexShader = compile vs_4_0 VSTexture();
+		PixelShader = compile ps_4_0 PSTextureAndLight();
 	}
 };
