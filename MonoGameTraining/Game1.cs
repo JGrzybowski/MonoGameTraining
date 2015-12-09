@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MonoGameTraining
@@ -23,6 +24,7 @@ namespace MonoGameTraining
         //Terrain
         Effect effect;
         MeshGrid terrain;
+        TexturedCube cube;
         Skybox skybox;
         VertexBuffer vertexBuffer;
         VertexPositionNormalTexture[] vertexArray;
@@ -30,13 +32,16 @@ namespace MonoGameTraining
         public PointLight Light1, Light2;
         //Textures
         public int GrassTextureIndex = 0;
-        private  Texture2D[] grassTextures = new Texture2D[2];
+        private Texture2D[] grassTextures = new Texture2D[2];
         private Texture2D sidewalkTexture;
-
+        private Texture2D gridSkybox;
+        public SamplerState Sampler1 = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
+        public SamplerState Sampler2 = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
 
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
+            cube = new TexturedCube(1000);
             terrain = new MeshGrid(40, 40, 1);
             Content.RootDirectory = "Content";
         }
@@ -55,7 +60,12 @@ namespace MonoGameTraining
 
             //Fill buffer with terrain vertices
             terrain.RecalculateNormals();
-            vertexArray = terrain.TriangleVerticesList;
+
+            var tmpList = new List<VertexPositionNormalTexture>();
+            tmpList.AddRange(terrain.TriangleVerticesList);
+            //tmpList.AddRange(cube.TriangleVerticesList);
+
+            vertexArray = tmpList.ToArray();
             vertexBuffer = new VertexBuffer(graphics.GraphicsDevice, typeof(VertexPositionNormalTexture), vertexArray.Length, BufferUsage.WriteOnly);
             vertexBuffer.SetData(vertexArray);
 
@@ -80,19 +90,19 @@ namespace MonoGameTraining
             };
 
         }
-        
-        
+                
         protected override void LoadContent()
         {
             //skybox = new Skybox("SkyBox", Content);
-            effect = Content.Load<Effect>("NewPointLight");
+            effect = Content.Load<Effect>("Shaders");
             lanternModel = Content.Load<Model>("Lantern");
             monkeyModel = Content.Load<Model>("monkey");
 
             grassTextures[0] = Content.Load<Texture2D>("grass");
             grassTextures[1] = Content.Load<Texture2D>("lava");
-
             sidewalkTexture = Content.Load<Texture2D>("road");
+            gridSkybox = Content.Load<Texture2D>("gridSkybox");
+
             foreach (ModelMesh mesh in lanternModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
                     meshPart.Effect = effect.Clone();
@@ -124,10 +134,10 @@ namespace MonoGameTraining
 
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-            
-            //Shader settings
-            SetupCustomShader(effect, "SimpleTextured", new Vector3(0,0,0));
 
+            //Shader settings
+            SetupCustomShader(effect, new Vector3(0, 0, 0));
+            SetupTextureShader(effect, "DoubleTextured", grassTextures[GrassTextureIndex], sidewalkTexture);
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -136,6 +146,16 @@ namespace MonoGameTraining
                 GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, terrain.SizeX * terrain.SizeZ * 2);
                 //graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, terrain.TriangleVerticesList, 0, terrain.SizeX * terrain.SizeZ * 2, VertexPositionNormalTexture.VertexDeclaration);
             }
+
+            SetupCustomShader(effect, new Vector3(cube.Size/(-2)));
+            SetupTextureShader(effect, "SingleTextured", gridSkybox);
+            foreach (EffectPass pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                //GraphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, 14);
+                graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, cube.TriangleVerticesList, 0, 12, VertexPositionNormalTexture.VertexDeclaration);
+            }
+
 
             //  Lantern1
             DrawModel(lanternModel, new Vector3(0, 0, 0), "SinglePointLight");
@@ -147,19 +167,29 @@ namespace MonoGameTraining
             base.Draw(gameTime);
         }
 
-        private void SetupCustomShader(Effect effect, string techniqueName, Vector3 translation)
+        private void SetupCustomShader(Effect effect, Vector3 translation)
         {
-            effect.CurrentTechnique = effect.Techniques[techniqueName];
             effect.Parameters["xWorld"].SetValue(Matrix.CreateTranslation(translation));
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
+        }
+
+        private void SetupTextureShader(Effect effect, string techniqueName, Texture2D tex1, Texture2D tex2 = null)
+        {
+            effect.CurrentTechnique = effect.Techniques[techniqueName];
+            effect.GraphicsDevice.SamplerStates[0] = Sampler1;
+            effect.Parameters["tex1"].SetValue(tex1);
+            if(techniqueName == "DoubleTextured")
+                effect.Parameters["tex2"].SetValue(tex2);
+        }
+
+        private void SetupPointLightShader(Effect effect, string techniqueName)
+        {
+            effect.CurrentTechnique = effect.Techniques[techniqueName];
             effect.Parameters["AmbientColor"].SetValue(new Vector4(0.2f, 0.2f, 0.2f,1f));
-            effect.Parameters["tex1"].SetValue(grassTextures[GrassTextureIndex]);
-            effect.Parameters["tex2"].SetValue(sidewalkTexture);
             Light1.SetEffectParameters(effect, 1);
             Light2.SetEffectParameters(effect, 2);
-
         }
         private void DrawModel(Model model, Vector3 modelPosition, string technique )
         {
@@ -170,7 +200,8 @@ namespace MonoGameTraining
                 foreach (Effect effect in mesh.Effects)
                 {
                     effect.CurrentTechnique = effect.Techniques[technique];
-                    SetupCustomShader(effect, technique, modelPosition);
+                    SetupCustomShader(effect, modelPosition);
+                    SetupPointLightShader(effect, technique);
                 }
                 mesh.Draw();
             }

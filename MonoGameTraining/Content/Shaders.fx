@@ -10,11 +10,13 @@ float3 L1DColor, L2DColor;
 float4 L1SColor, L2SColor;
 float L1Range, L2Range;
 bool L1On,L2On;
+//Fog
+
 //Textures
 Texture2D tex1;
 Texture2D tex2;
-sampler TextureSampler1 = sampler_state { texture = <tex1>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
-sampler TextureSampler2 = sampler_state { texture = <tex2>; magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
+sampler TextureSampler1 = sampler_state { magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
+sampler TextureSampler2 = sampler_state { magfilter = POINT; minfilter = POINT; mipfilter = POINT; AddressU = mirror; AddressV = mirror; };
 //----------------
 
 //----------------
@@ -138,24 +140,39 @@ VertexTextureShaderOut VSSimpleTexMain(VertexTextureShaderIn input) {
 	return output;
 }
 
-PixelShaderOut PSSimpleTexMain(VertexTextureShaderOut input)
+PixelShaderOut PSSingleTexMain(VertexTextureShaderOut input)
 {
 	PixelShaderOut output = (PixelShaderOut)0;
-	float4 t1 = output.Color = tex2D(TextureSampler1, input.TexPosition);
-	float4 t2 = output.Color = tex2D(TextureSampler2, input.TexPosition);
+	output.Color = tex1.Sample(TextureSampler1, input.TexPosition);
+	return output;
+}
+
+PixelShaderOut PSDoubleTexMain(VertexTextureShaderOut input)
+{
+	PixelShaderOut output = (PixelShaderOut)0;
+	float4 t1 = tex1.Sample(TextureSampler1, input.TexPosition);
+	float4 t2 = tex2.Sample(TextureSampler2, input.TexPosition);
 	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w, 1);
 	return output;
 }
 
-technique SimpleTextured
+technique SingleTextured
 {
 	pass Pass0
 	{
 		VertexShader = compile vs_4_0 VSSimpleTexMain();
-		PixelShader = compile ps_4_0 PSSimpleTexMain();
+		PixelShader = compile ps_4_0 PSSingleTexMain();
 	}
 };
 
+technique DoubleTextured 
+{
+	pass Pass0
+	{
+		VertexShader = compile vs_4_0 VSSimpleTexMain();
+		PixelShader = compile ps_4_0 PSDoubleTexMain();
+	}
+};
 
 
 //----------------TEXTURED WITH LIGHT SHADER
