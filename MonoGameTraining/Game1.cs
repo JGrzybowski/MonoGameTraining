@@ -21,7 +21,6 @@ namespace MonoGameTraining
         //Lantern model
         Vector3 lantern1Position = new Vector3(5, 0, 10);
         Vector3 lantern2Position = new Vector3(20, 0, 25);
-
         Model lanternModel;
         Model monkeyModel;
         //Terrain
@@ -36,10 +35,19 @@ namespace MonoGameTraining
         //Textures
         public int GrassTextureIndex = 0;
         private Texture2D[] grassTextures = new Texture2D[2];
-        private Texture2D sidewalkTexture;
-        private Texture2D gridSkybox;
-        public SamplerState Sampler1 = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
-        public SamplerState Sampler2 = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
+        private Texture2D sidewalkTexture, gridSkybox, symbolTexture;
+        public TextureFilter TexFilter = TextureFilter.Linear;
+        public float MipMapLevelBias = 0;
+        //Fog
+        private float fogIntensity = 0.7f;
+        public float FogIntensity { get { return fogIntensity; } set { fogIntensity = value; } }
+        private float fogStart = 10;
+        public float FogStart { get { return fogStart; } set { fogStart = value; } }
+        private float fogEnd = 100;
+        public float FogEnd { get { return fogEnd; } set { fogEnd = value; } }
+
+
+
 
         public Game1()
         {
@@ -105,6 +113,7 @@ namespace MonoGameTraining
             grassTextures[1] = Content.Load<Texture2D>("lava");
             sidewalkTexture = Content.Load<Texture2D>("road");
             gridSkybox = Content.Load<Texture2D>("gridSkybox");
+            symbolTexture = Content.Load<Texture2D>("batman-logo");
 
             foreach (ModelMesh mesh in lanternModel.Meshes)
                 foreach (ModelMeshPart meshPart in mesh.MeshParts)
@@ -141,7 +150,7 @@ namespace MonoGameTraining
             //Shader settings
             SetupCustomShader(effect, new Vector3(0, 0, 0));
             SetupTextureShader(effect, "DoubleTextured", grassTextures[GrassTextureIndex], sidewalkTexture);
-            SetupPointLightShader(effect, "TexturedPointLight");
+            SetupPointLightShader(effect, "TextureLightFog");
             //Rendering
             //  terrain
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
@@ -152,7 +161,7 @@ namespace MonoGameTraining
             }
 
             SetupCustomShader(effect, new Vector3(cube.Size/(-2)));
-            SetupTextureShader(effect, "SingleTextured", gridSkybox);
+            SetupTextureShader(effect, "TextureFog", gridSkybox);
             foreach (EffectPass pass in effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
@@ -177,14 +186,18 @@ namespace MonoGameTraining
             effect.Parameters["xView"].SetValue(Camera.ViewMatrix);
             effect.Parameters["xProjection"].SetValue(projectionMatrix);
             effect.Parameters["xCameraPosition"].SetValue(new Vector4(Camera.CameraPosition, 1));
+            effect.Parameters["fogColor"].SetValue(new Vector4(1f,1f,1f,FogIntensity));
+            effect.Parameters["fogStart"].SetValue(this.FogStart);
+            effect.Parameters["fogEnd"].SetValue(this.FogEnd);
         }
 
         private void SetupTextureShader(Effect effect, string techniqueName, Texture2D tex1, Texture2D tex2 = null)
         {
             effect.CurrentTechnique = effect.Techniques[techniqueName];
-            effect.GraphicsDevice.SamplerStates[0] = Sampler1;
             effect.Parameters["tex1"].SetValue(tex1);
-            if(techniqueName == "DoubleTextured")
+            effect.GraphicsDevice.SamplerStates[1] = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TexFilter, MipMapLevelOfDetailBias = MipMapLevelBias };
+            effect.GraphicsDevice.SamplerStates[2] = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
+            if (techniqueName == "DoubleTextured")
                 effect.Parameters["tex2"].SetValue(tex2);
         }
 

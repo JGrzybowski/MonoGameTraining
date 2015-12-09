@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework.Graphics;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -47,6 +48,39 @@ namespace MonoGameTraining
         private void TerrainSwitch_Click(object sender, RoutedEventArgs e)
         {
             _game.GrassTextureIndex = (_game.GrassTextureIndex == 0) ? 1 : 0;
+        }
+
+        private void FogIntensitySlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (_game != null)
+                _game.FogIntensity = (float)e.NewValue;
+        }
+
+        private void FogStartSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (_game != null)
+                _game.FogStart = (float)e.NewValue;
+        }
+
+
+        private void FogEndSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (_game != null)
+                _game.FogEnd= (float)e.NewValue;
+
+        }
+
+        private void TextrueFiltersCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var value = ((sender as ComboBox).SelectedItem as ComboBoxItem).Content.ToString();
+            if (_game != null)
+                _game.TexFilter = (TextureFilter)Enum.Parse(typeof(TextureFilter), value);
+        }
+
+        private void BiasSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
+        {
+            if (_game != null)
+                _game.MipMapLevelBias = (float)e.NewValue;
         }
     }
 }

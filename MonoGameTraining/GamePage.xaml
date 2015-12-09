@@ -5,6 +5,7 @@
     xmlns:local="using:MonoGameTraining"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     mc:Ignorable="d">
 
     <SwapChainPanel x:Name="swapChainPanel">
@@ -14,10 +15,21 @@
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition />
-            <ColumnDefinition />
-            <ColumnDefinition />
         </Grid.ColumnDefinitions>
-        <CommandBar Grid.Row="1" IsOpen="True">
+        <CommandBar Grid.Row="1" IsOpen="True" Padding="20,0">
+            <CommandBar.Content>
+                <StackPanel Orientation="Horizontal">
+                    <Slider x:Name="FogIntensitySlider" Width="150" Maximum="1" SmallChange="0.1" LargeChange="0.1" StepFrequency="0.1" Value="0.7" ValueChanged="FogIntensitySlider_ValueChanged" Margin="0" TickFrequency="0.1" />
+                    <Slider x:Name="FogStartSlider" Width="150" Maximum="15" SmallChange="1" LargeChange="0.1" StepFrequency="0.1" Value="10" ValueChanged="FogStartSlider_ValueChanged"  Margin="25,0,0,0" Minimum="1" />
+                    <Slider x:Name="FogEndSlider" Width="150" Maximum="250" SmallChange="10" LargeChange="10" StepFrequency="10" Value="100" ValueChanged="FogEndSlider_ValueChanged"  Margin="25,0,0,0" Minimum="50" />
+                    <ComboBox x:Name="TextrueFiltersCombobox" SelectionChanged="TextrueFiltersCombobox_SelectionChanged" SelectedIndex="0" Margin="25,0,0,0" VerticalAlignment="Center" >
+                        <ComboBoxItem>Linear</ComboBoxItem>
+                        <ComboBoxItem>LinearMipPoint</ComboBoxItem>
+                        <ComboBoxItem>Point</ComboBoxItem>
+                    </ComboBox>
+                    <Slider x:Name="BiasSlider" Width="100" Maximum="2" SmallChange="1" ValueChanged="BiasSlider_ValueChanged" Margin="25,0,0,0" LargeChange="1" Minimum="-2" TickFrequency="1" />
+                </StackPanel>
+            </CommandBar.Content>
             <AppBarButton x:Name="Light1Switch" Click="Light1Switch_Click" Icon="Map"  />
             <AppBarButton x:Name="Light2Switch" Click="Light2Switch_Click" Icon="Map"  />
             <AppBarButton x:Name="TerrainSwitch" Click="TerrainSwitch_Click" Icon="Globe"  />
