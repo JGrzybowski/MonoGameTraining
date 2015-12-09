@@ -11,7 +11,9 @@ float4 L1SColor, L2SColor;
 float L1Range, L2Range;
 bool L1On,L2On;
 //Fog
-
+float fogStart = 1;
+float fogEnd = 100;
+float4 fogColor = float4(1.0f, 1.0f, 1.0f, 1.0f);
 //Textures
 Texture2D tex1;
 Texture2D tex2;
@@ -180,7 +182,7 @@ technique DoubleTextured
 
 //-------------
 
-VertexTextureShaderOut VSTexMain(VertexTextureShaderIn input) {
+VertexTextureShaderOut VSLightMain(VertexTextureShaderIn input) {
 	VertexTextureShaderOut output = (VertexTextureShaderOut)0;
 	input.Position.w = 1;
 	input.Normal.w = 0;
@@ -194,7 +196,7 @@ VertexTextureShaderOut VSTexMain(VertexTextureShaderIn input) {
 	return output;
 }
 
-PixelShaderOut PSTexMain(VertexTextureShaderOut input)
+PixelShaderOut PSLightMain(VertexTextureShaderOut input)
 {
 	PixelShaderOut output = (PixelShaderOut)0;
 
@@ -216,6 +218,12 @@ PixelShaderOut PSTexMain(VertexTextureShaderOut input)
 	float4 t1 = output.Color = tex2D(TextureSampler1, input.TexPosition);
 	float4 t2 = output.Color = tex2D(TextureSampler2, input.TexPosition);
 	output.Color = float4((1 - t2.w)*t1.xyz + t2.xyz*t2.w,1);
+
+	//Fog
+	float fogFactor = saturate((fogEnd - (xCameraPosition - input.WPosition)) / (fogEnd - fogStart));
+	// Calculate the final color using the fog effect equation.
+	float4 fog = fogFactor + (1.0 - fogFactor) * fogColor;
+	output.Color = output.Color * fog;
 	return output;
 }
 
@@ -224,7 +232,7 @@ technique TexturedPointLight
 {
 	pass Pass0
 	{
-		VertexShader = compile vs_4_0 VSTexMain();
-		PixelShader = compile ps_4_0 PSTexMain();
+		VertexShader = compile vs_4_0 VSLightMain();
+		PixelShader = compile ps_4_0 PSLightMain();
 	}
 };
