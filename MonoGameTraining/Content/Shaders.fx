@@ -80,7 +80,7 @@ float4 CalculateSpotlightColor(float4 light, float4 normal, float4 view, float4 
 								float3 diffuseColor, float3 specularColor, int specularPower, float range, float distance)
 {
 	float spotScale = saturate(dot(light, normal));
-	if ((spotScale - L3Cone) <= 0)
+	if ((L3Cone - spotScale) > 0)
 		return float4(0, 0, 0, 0);
 
 	float4 c = CalculateColor(light, normal, view, diffuseColor, specularColor, specularPower, range, distance);

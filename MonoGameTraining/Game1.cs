@@ -195,6 +195,7 @@ namespace MonoGameTraining
         {
             effect.CurrentTechnique = effect.Techniques[techniqueName];
             effect.Parameters["tex1"].SetValue(tex1);
+            effect.Parameters["Light3Tex"].SetValue(symbolTexture);
             effect.GraphicsDevice.SamplerStates[1] = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TexFilter, MipMapLevelOfDetailBias = MipMapLevelBias };
             effect.GraphicsDevice.SamplerStates[2] = new SamplerState() { AddressU = TextureAddressMode.Mirror, AddressV = TextureAddressMode.Mirror, Filter = TextureFilter.Linear };
             if (techniqueName == "DoubleTextured")
